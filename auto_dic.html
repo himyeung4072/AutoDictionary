@@ -275,31 +275,21 @@
         let filteredVoices = [];
         
         if (selectedLang === 'zh-HK') {
-            // 粵語：優先顯示 HK、yue 相關的語音
+            // 粵語：iOS 上是 yue-HK
             filteredVoices = availableVoices.filter(voice => 
-                voice.lang.includes('HK') || 
-                voice.lang.includes('yue') || 
-                voice.name.toLowerCase().includes('cantonese') ||
-                voice.name.toLowerCase().includes('hong kong')
+                voice.lang === 'yue-HK' || 
+                voice.lang.includes('yue') ||
+                (voice.lang.includes('HK') && !voice.lang.startsWith('en'))
             );
-            // 如果沒有找到，顯示所有中文語音
-            if (filteredVoices.length === 0) {
-                filteredVoices = availableVoices.filter(voice => voice.lang.startsWith('zh'));
-            }
         } else if (selectedLang === 'zh-CN') {
-            // 普通話：優先顯示 CN、cmn 相關的語音，排除 HK/TW
+            // 普通話：zh-CN，排除 yue 和 TW
             filteredVoices = availableVoices.filter(voice => 
-                (voice.lang.includes('CN') || voice.lang.includes('cmn')) &&
-                !voice.lang.includes('HK') && !voice.lang.includes('TW')
+                voice.lang === 'zh-CN' ||
+                (voice.lang.startsWith('zh') && 
+                 !voice.lang.includes('yue') && 
+                 !voice.lang.includes('TW') &&
+                 !voice.lang.includes('HK'))
             );
-            // 如果沒有找到，顯示所有中文語音（排除明確的粵語）
-            if (filteredVoices.length === 0) {
-                filteredVoices = availableVoices.filter(voice => 
-                    voice.lang.startsWith('zh') && 
-                    !voice.lang.includes('HK') &&
-                    !voice.name.toLowerCase().includes('cantonese')
-                );
-            }
         } else {
             // 其他語言：按語言前綴過濾
             const langPrefix = selectedLang.split('-')[0];
@@ -314,23 +304,15 @@
             
             // 識別語音類型
             let label = voice.name;
-            const langLower = voice.lang.toLowerCase();
-            const nameLower = voice.name.toLowerCase();
+            const voiceLang = voice.lang.toLowerCase();
             
             // 標記語言類型
-            if (langLower.includes('hk') || langLower.includes('yue') || nameLower.includes('cantonese')) {
+            if (voiceLang.includes('yue') || voiceLang === 'zh-hk') {
                 label += ' (粵語)';
-            } else if (langLower.includes('cn') || langLower.includes('cmn') || nameLower.includes('mandarin')) {
+            } else if (voiceLang === 'zh-cn') {
                 label += ' (普通話)';
-            } else if (langLower.includes('tw')) {
+            } else if (voiceLang === 'zh-tw') {
                 label += ' (台灣)';
-            }
-            
-            // 標記性別
-            if (nameLower.includes('female') || nameLower.includes('woman')) {
-                label += ' 女聲';
-            } else if (nameLower.includes('male') || nameLower.includes('man')) {
-                label += ' 男聲';
             }
             
             option.textContent = label;
@@ -543,52 +525,38 @@
     function findBestVoice(lang) {
         if (availableVoices.length === 0) return null;
         
-        // 優先精確匹配語言代碼
-        let voice = availableVoices.find(v => v.lang === lang);
-        if (voice) return voice;
+        // iOS 上的語言代碼對照：
+        // 粵語: yue-HK (善怡)
+        // 普通話: zh-CN (婷婷)
+        // 台灣: zh-TW (美佳)
         
-        // iOS 上的語言代碼可能不同，嘗試其他匹配方式
-        const langMappings = {
-            'zh-HK': ['zh-HK', 'zh_HK', 'yue-HK', 'yue_HK', 'yue-Hant-HK'],  // 粵語
-            'zh-CN': ['zh-CN', 'zh_CN', 'cmn-Hans-CN', 'zh-Hans-CN'],        // 普通話
-            'en-GB': ['en-GB', 'en_GB', 'en-US', 'en_US', 'en']              // 英語
-        };
-        
-        const candidates = langMappings[lang] || [lang];
-        for (const candidate of candidates) {
+        if (lang === 'zh-HK') {
+            // 粵語：找 yue-HK 或名稱包含粵語相關的
+            let voice = availableVoices.find(v => v.lang === 'yue-HK');
+            if (voice) return voice;
+            voice = availableVoices.find(v => v.lang.includes('yue') || v.lang.includes('HK'));
+            if (voice) return voice;
+        } else if (lang === 'zh-CN') {
+            // 普通話：找 zh-CN，排除 yue 和 TW
+            let voice = availableVoices.find(v => v.lang === 'zh-CN');
+            if (voice) return voice;
             voice = availableVoices.find(v => 
-                v.lang === candidate || 
-                v.lang.replace('_', '-') === candidate ||
-                v.lang.startsWith(candidate.split('-')[0])
+                v.lang.startsWith('zh') && 
+                !v.lang.includes('yue') && 
+                !v.lang.includes('TW') &&
+                !v.lang.includes('HK')
             );
-            if (voice) {
-                // 對於中文，確保粵語和普通話不會混淆
-                if (lang === 'zh-HK') {
-                    // 粵語：優先選擇包含 HK、yue、Cantonese 的語音
-                    const cantoneseVoice = availableVoices.find(v => 
-                        v.lang.includes('HK') || 
-                        v.lang.includes('yue') || 
-                        v.name.toLowerCase().includes('cantonese') ||
-                        v.name.toLowerCase().includes('hong kong')
-                    );
-                    if (cantoneseVoice) return cantoneseVoice;
-                } else if (lang === 'zh-CN') {
-                    // 普通話：優先選擇包含 CN、cmn、Mandarin 的語音，排除 HK/TW
-                    const mandarinVoice = availableVoices.find(v => 
-                        (v.lang.includes('CN') || 
-                         v.lang.includes('cmn') || 
-                         v.name.toLowerCase().includes('mandarin') ||
-                         v.name.toLowerCase().includes('chinese') && !v.name.toLowerCase().includes('cantonese')) &&
-                        !v.lang.includes('HK') && 
-                        !v.lang.includes('TW')
-                    );
-                    if (mandarinVoice) return mandarinVoice;
-                }
-                return voice;
-            }
+            if (voice) return voice;
+        } else if (lang === 'en-GB') {
+            let voice = availableVoices.find(v => v.lang === 'en-GB');
+            if (voice) return voice;
+            voice = availableVoices.find(v => v.lang.startsWith('en'));
+            if (voice) return voice;
         }
         
-        return null;
+        // 通用匹配
+        return availableVoices.find(v => v.lang === lang) || 
+               availableVoices.find(v => v.lang.startsWith(lang.split('-')[0]));
     }
 
     function speakPromise(text, lang, voiceName, rate) {
