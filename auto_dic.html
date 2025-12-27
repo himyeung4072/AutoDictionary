@@ -530,33 +530,35 @@
         // 普通話: zh-CN (婷婷)
         // 台灣: zh-TW (美佳)
         
+        let voice = null;
+        
         if (lang === 'zh-HK') {
-            // 粵語：找 yue-HK 或名稱包含粵語相關的
-            let voice = availableVoices.find(v => v.lang === 'yue-HK');
-            if (voice) return voice;
-            voice = availableVoices.find(v => v.lang.includes('yue') || v.lang.includes('HK'));
-            if (voice) return voice;
+            // 粵語：找 yue-HK
+            voice = availableVoices.find(v => v.lang === 'yue-HK');
+            if (!voice) voice = availableVoices.find(v => v.lang.includes('yue'));
+            if (!voice) voice = availableVoices.find(v => v.lang.includes('HK') && v.lang.startsWith('zh'));
         } else if (lang === 'zh-CN') {
-            // 普通話：找 zh-CN，排除 yue 和 TW
-            let voice = availableVoices.find(v => v.lang === 'zh-CN');
-            if (voice) return voice;
-            voice = availableVoices.find(v => 
-                v.lang.startsWith('zh') && 
-                !v.lang.includes('yue') && 
-                !v.lang.includes('TW') &&
-                !v.lang.includes('HK')
-            );
-            if (voice) return voice;
+            // 普通話：找 zh-CN，必須排除 yue
+            voice = availableVoices.find(v => v.lang === 'zh-CN');
+            if (!voice) {
+                voice = availableVoices.find(v => 
+                    v.lang.startsWith('zh') && 
+                    !v.lang.includes('yue') && 
+                    !v.lang.includes('TW') &&
+                    !v.lang.includes('HK')
+                );
+            }
         } else if (lang === 'en-GB') {
-            let voice = availableVoices.find(v => v.lang === 'en-GB');
-            if (voice) return voice;
-            voice = availableVoices.find(v => v.lang.startsWith('en'));
-            if (voice) return voice;
+            voice = availableVoices.find(v => v.lang === 'en-GB');
+            if (!voice) voice = availableVoices.find(v => v.lang.startsWith('en'));
+        } else {
+            // 通用匹配
+            voice = availableVoices.find(v => v.lang === lang);
+            if (!voice) voice = availableVoices.find(v => v.lang.startsWith(lang.split('-')[0]));
         }
         
-        // 通用匹配
-        return availableVoices.find(v => v.lang === lang) || 
-               availableVoices.find(v => v.lang.startsWith(lang.split('-')[0]));
+        console.log(`findBestVoice(${lang}):`, voice ? `${voice.name} (${voice.lang})` : 'null');
+        return voice;
     }
 
     function speakPromise(text, lang, voiceName, rate) {
@@ -574,17 +576,29 @@
                 
                 // 開始朗讀
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = lang;
                 utterance.rate = rate;
-
-                // iOS Safari 需要明確指定語音，否則可能使用錯誤的語音
+                
+                // iOS Safari 關鍵修復：必須先設定 voice，再設定 lang
+                // 如果只設定 lang，iOS 會忽略它
+                let selectedVoice = null;
+                
                 if (voiceName !== 'auto') {
-                    const voice = availableVoices.find(v => v.name === voiceName);
-                    if (voice) utterance.voice = voice;
-                } else {
+                    selectedVoice = availableVoices.find(v => v.name === voiceName);
+                }
+                
+                if (!selectedVoice) {
                     // 自動模式：根據語言找到最佳匹配的語音
-                    const bestVoice = findBestVoice(lang);
-                    if (bestVoice) utterance.voice = bestVoice;
+                    selectedVoice = findBestVoice(lang);
+                }
+                
+                if (selectedVoice) {
+                    utterance.voice = selectedVoice;
+                    // 使用語音的語言代碼，而不是用戶選擇的
+                    utterance.lang = selectedVoice.lang;
+                    console.log(`Speaking with voice: ${selectedVoice.name} (${selectedVoice.lang})`);
+                } else {
+                    utterance.lang = lang;
+                    console.log(`No voice found, using lang: ${lang}`);
                 }
 
                 currentUtterance = utterance;
@@ -671,30 +685,34 @@
     function showVoiceDebug() {
         const voices = synth.getVoices();
         const debugDiv = document.getElementById('voiceDebug');
+        const selectedLang = document.getElementById('langSelect').value;
         
         if (voices.length === 0) {
             debugDiv.textContent = '沒有找到語音，請稍後再試...';
             return;
         }
         
-        let output = `找到 ${voices.length} 個語音:\n\n`;
+        // 測試 findBestVoice
+        const bestVoice = findBestVoice(selectedLang);
+        
+        let output = `找到 ${voices.length} 個語音\n`;
+        output += `當前選擇語言: ${selectedLang}\n`;
+        output += `自動選擇語音: ${bestVoice ? `${bestVoice.name} (${bestVoice.lang})` : '無'}\n\n`;
         
         // 分類顯示
         const zhVoices = voices.filter(v => v.lang.startsWith('zh') || v.lang.includes('yue') || v.lang.includes('cmn'));
-        const otherVoices = voices.filter(v => !v.lang.startsWith('zh') && !v.lang.includes('yue') && !v.lang.includes('cmn'));
         
         output += '=== 中文語音 ===\n';
         zhVoices.forEach(v => {
-            output += `名稱: ${v.name}\n語言: ${v.lang}\n本地: ${v.localService}\n---\n`;
-        });
-        
-        output += '\n=== 其他語音 (前10個) ===\n';
-        otherVoices.slice(0, 10).forEach(v => {
-            output += `${v.name} (${v.lang})\n`;
+            const marker = (bestVoice && v.name === bestVoice.name) ? ' ✓ 已選' : '';
+            output += `${v.name} (${v.lang})${marker}\n`;
         });
         
         debugDiv.textContent = output;
     }
+    
+    // 語言選擇變更時更新調試信息
+    document.getElementById('langSelect').addEventListener('change', showVoiceDebug);
     
     // 頁面載入後自動顯示調試信息
     setTimeout(showVoiceDebug, 1000);
