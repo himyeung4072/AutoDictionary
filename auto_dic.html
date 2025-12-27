@@ -364,46 +364,43 @@
         let hintDiv = document.getElementById('iosHint');
         const selectedLang = document.getElementById('langSelect').value;
         
-        if (isiOSDevice) {
-            if (!hintDiv) {
-                hintDiv = document.createElement('div');
-                hintDiv.id = 'iosHint';
-                hintDiv.style.cssText = 'margin-top: 10px; padding: 12px; background: #fff3cd; border-radius: 6px; font-size: 13px; color: #856404; border: 1px solid #ffc107;';
-                const controlsDiv = document.querySelector('.controls');
-                controlsDiv.parentNode.insertBefore(hintDiv, controlsDiv.nextSibling);
-            }
-            
-            // 根據選擇的語言顯示不同的提示
-            if (selectedLang === 'zh-CN') {
-                hintDiv.innerHTML = `
-                    <strong>⚠️ iOS 普通話設定</strong><br>
-                    由於 iOS 26 系統限制，請按以下步驟設定：<br>
-                    <ol style="margin: 8px 0 0 0; padding-left: 20px;">
-                        <li>打開 iPhone「設定」</li>
-                        <li>進入「輔助使用」→「朗讀內容」→「聲音」</li>
-                        <li>選擇「中文」→「中文（普通話）」</li>
-                        <li>選擇「婷婷」作為預設語音</li>
-                    </ol>
-                `;
-            } else if (selectedLang === 'zh-HK') {
-                hintDiv.innerHTML = `
-                    <strong>✅ iOS 粵語</strong><br>
-                    系統預設已支援粵語（善怡），無需額外設定。
-                `;
-                hintDiv.style.background = '#d4edda';
-                hintDiv.style.color = '#155724';
-                hintDiv.style.borderColor = '#28a745';
-            } else {
-                hintDiv.innerHTML = `
-                    <strong>💡 iOS 用戶提示</strong><br>
-                    如語音不正確，請到「設定 → 輔助使用 → 朗讀內容 → 聲音」中設定對應語言的預設語音。
-                `;
-                hintDiv.style.background = '#e7f3ff';
-                hintDiv.style.color = '#0066cc';
-                hintDiv.style.borderColor = '#007bff';
-            }
-        } else if (hintDiv) {
-            hintDiv.remove();
+        // 英語不需要顯示提示
+        if (!isiOSDevice || selectedLang === 'en-GB') {
+            if (hintDiv) hintDiv.remove();
+            return;
+        }
+        
+        if (!hintDiv) {
+            hintDiv = document.createElement('div');
+            hintDiv.id = 'iosHint';
+            hintDiv.style.cssText = 'margin-top: 10px; padding: 12px; background: #fff3cd; border-radius: 6px; font-size: 13px; color: #856404; border: 1px solid #ffc107;';
+            const controlsDiv = document.querySelector('.controls');
+            controlsDiv.parentNode.insertBefore(hintDiv, controlsDiv.nextSibling);
+        }
+        
+        // 根據選擇的語言顯示不同的提示
+        if (selectedLang === 'zh-CN') {
+            hintDiv.style.background = '#fff3cd';
+            hintDiv.style.color = '#856404';
+            hintDiv.style.borderColor = '#ffc107';
+            hintDiv.innerHTML = `
+                <strong>⚠️ iOS 普通話設定</strong><br>
+                由於 iOS 26 系統限制，請按以下步驟設定：<br>
+                <ol style="margin: 8px 0 0 0; padding-left: 20px;">
+                    <li>打開 iPhone「設定」</li>
+                    <li>進入「輔助使用」→「閱讀與朗讀」→「聲音」</li>
+                    <li>選擇「中文」→「國語」/「普通話」</li>
+                    <li>選擇「婷婷」作為預設語音</li>
+                </ol>
+            `;
+        } else if (selectedLang === 'zh-HK') {
+            hintDiv.style.background = '#d4edda';
+            hintDiv.style.color = '#155724';
+            hintDiv.style.borderColor = '#28a745';
+            hintDiv.innerHTML = `
+                <strong>✅ iOS 粵語</strong><br>
+                系統預設已支援粵語（善怡），無需額外設定。
+            `;
         }
     }
     
