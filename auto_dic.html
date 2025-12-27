@@ -157,6 +157,12 @@
     </div>
 
     <div id="status" class="status" role="status" aria-live="polite"></div>
+    
+    <details style="margin-top: 15px; font-size: 12px;">
+        <summary style="cursor: pointer; color: #666;">調試：查看可用語音</summary>
+        <div id="voiceDebug" style="margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 6px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; font-family: monospace;"></div>
+        <button onclick="showVoiceDebug()" style="margin-top: 5px; padding: 5px 10px; font-size: 12px;">刷新語音列表</button>
+    </details>
 </div>
 
 <script>
@@ -692,6 +698,38 @@
         document.getElementById('pauseBtn').disabled = !running;
         document.getElementById('stopBtn').disabled = !running;
     }
+    
+    // 調試：顯示可用語音
+    function showVoiceDebug() {
+        const voices = synth.getVoices();
+        const debugDiv = document.getElementById('voiceDebug');
+        
+        if (voices.length === 0) {
+            debugDiv.textContent = '沒有找到語音，請稍後再試...';
+            return;
+        }
+        
+        let output = `找到 ${voices.length} 個語音:\n\n`;
+        
+        // 分類顯示
+        const zhVoices = voices.filter(v => v.lang.startsWith('zh') || v.lang.includes('yue') || v.lang.includes('cmn'));
+        const otherVoices = voices.filter(v => !v.lang.startsWith('zh') && !v.lang.includes('yue') && !v.lang.includes('cmn'));
+        
+        output += '=== 中文語音 ===\n';
+        zhVoices.forEach(v => {
+            output += `名稱: ${v.name}\n語言: ${v.lang}\n本地: ${v.localService}\n---\n`;
+        });
+        
+        output += '\n=== 其他語音 (前10個) ===\n';
+        otherVoices.slice(0, 10).forEach(v => {
+            output += `${v.name} (${v.lang})\n`;
+        });
+        
+        debugDiv.textContent = output;
+    }
+    
+    // 頁面載入後自動顯示調試信息
+    setTimeout(showVoiceDebug, 1000);
 </script>
 
 </body>
