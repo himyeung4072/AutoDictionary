@@ -265,18 +265,69 @@
         
         voiceSelect.innerHTML = '<option value="auto">自動</option>';
         
-        // 中文語言都顯示所有中文聲音 (zh-CN, zh-TW, zh-HK)
-        const langPrefix = selectedLang.split('-')[0];
-        const filteredVoices = availableVoices.filter(voice => 
-            voice.lang.startsWith(langPrefix)
-        );
+        // 根據選擇的語言過濾語音
+        let filteredVoices = [];
+        
+        if (selectedLang === 'zh-HK') {
+            // 粵語：優先顯示 HK、yue 相關的語音
+            filteredVoices = availableVoices.filter(voice => 
+                voice.lang.includes('HK') || 
+                voice.lang.includes('yue') || 
+                voice.name.toLowerCase().includes('cantonese') ||
+                voice.name.toLowerCase().includes('hong kong')
+            );
+            // 如果沒有找到，顯示所有中文語音
+            if (filteredVoices.length === 0) {
+                filteredVoices = availableVoices.filter(voice => voice.lang.startsWith('zh'));
+            }
+        } else if (selectedLang === 'zh-CN') {
+            // 普通話：優先顯示 CN、cmn 相關的語音，排除 HK/TW
+            filteredVoices = availableVoices.filter(voice => 
+                (voice.lang.includes('CN') || voice.lang.includes('cmn')) &&
+                !voice.lang.includes('HK') && !voice.lang.includes('TW')
+            );
+            // 如果沒有找到，顯示所有中文語音（排除明確的粵語）
+            if (filteredVoices.length === 0) {
+                filteredVoices = availableVoices.filter(voice => 
+                    voice.lang.startsWith('zh') && 
+                    !voice.lang.includes('HK') &&
+                    !voice.name.toLowerCase().includes('cantonese')
+                );
+            }
+        } else {
+            // 其他語言：按語言前綴過濾
+            const langPrefix = selectedLang.split('-')[0];
+            filteredVoices = availableVoices.filter(voice => 
+                voice.lang.startsWith(langPrefix)
+            );
+        }
         
         filteredVoices.forEach((voice, index) => {
             const option = document.createElement('option');
             option.value = voice.name;
-            const gender = voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman') ? '(女聲)' : 
-                          voice.name.toLowerCase().includes('male') || voice.name.toLowerCase().includes('man') ? '(男聲)' : '';
-            option.textContent = `${voice.name} ${gender}`;
+            
+            // 識別語音類型
+            let label = voice.name;
+            const langLower = voice.lang.toLowerCase();
+            const nameLower = voice.name.toLowerCase();
+            
+            // 標記語言類型
+            if (langLower.includes('hk') || langLower.includes('yue') || nameLower.includes('cantonese')) {
+                label += ' (粵語)';
+            } else if (langLower.includes('cn') || langLower.includes('cmn') || nameLower.includes('mandarin')) {
+                label += ' (普通話)';
+            } else if (langLower.includes('tw')) {
+                label += ' (台灣)';
+            }
+            
+            // 標記性別
+            if (nameLower.includes('female') || nameLower.includes('woman')) {
+                label += ' 女聲';
+            } else if (nameLower.includes('male') || nameLower.includes('man')) {
+                label += ' 男聲';
+            }
+            
+            option.textContent = label;
             voiceSelect.appendChild(option);
         });
     }
@@ -482,6 +533,58 @@
     let currentUtterance = null;
     let isSpeaking = false;  // 標記是否正在朗讀中
 
+    // 根據語言找到最佳匹配的語音（iOS Safari 需要明確指定語音）
+    function findBestVoice(lang) {
+        if (availableVoices.length === 0) return null;
+        
+        // 優先精確匹配語言代碼
+        let voice = availableVoices.find(v => v.lang === lang);
+        if (voice) return voice;
+        
+        // iOS 上的語言代碼可能不同，嘗試其他匹配方式
+        const langMappings = {
+            'zh-HK': ['zh-HK', 'zh_HK', 'yue-HK', 'yue_HK', 'yue-Hant-HK'],  // 粵語
+            'zh-CN': ['zh-CN', 'zh_CN', 'cmn-Hans-CN', 'zh-Hans-CN'],        // 普通話
+            'en-GB': ['en-GB', 'en_GB', 'en-US', 'en_US', 'en']              // 英語
+        };
+        
+        const candidates = langMappings[lang] || [lang];
+        for (const candidate of candidates) {
+            voice = availableVoices.find(v => 
+                v.lang === candidate || 
+                v.lang.replace('_', '-') === candidate ||
+                v.lang.startsWith(candidate.split('-')[0])
+            );
+            if (voice) {
+                // 對於中文，確保粵語和普通話不會混淆
+                if (lang === 'zh-HK') {
+                    // 粵語：優先選擇包含 HK、yue、Cantonese 的語音
+                    const cantoneseVoice = availableVoices.find(v => 
+                        v.lang.includes('HK') || 
+                        v.lang.includes('yue') || 
+                        v.name.toLowerCase().includes('cantonese') ||
+                        v.name.toLowerCase().includes('hong kong')
+                    );
+                    if (cantoneseVoice) return cantoneseVoice;
+                } else if (lang === 'zh-CN') {
+                    // 普通話：優先選擇包含 CN、cmn、Mandarin 的語音，排除 HK/TW
+                    const mandarinVoice = availableVoices.find(v => 
+                        (v.lang.includes('CN') || 
+                         v.lang.includes('cmn') || 
+                         v.name.toLowerCase().includes('mandarin') ||
+                         v.name.toLowerCase().includes('chinese') && !v.name.toLowerCase().includes('cantonese')) &&
+                        !v.lang.includes('HK') && 
+                        !v.lang.includes('TW')
+                    );
+                    if (mandarinVoice) return mandarinVoice;
+                }
+                return voice;
+            }
+        }
+        
+        return null;
+    }
+
     function speakPromise(text, lang, voiceName, rate) {
         return new Promise((resolve) => {
             // 先等待暫停狀態結束
@@ -500,9 +603,14 @@
                 utterance.lang = lang;
                 utterance.rate = rate;
 
+                // iOS Safari 需要明確指定語音，否則可能使用錯誤的語音
                 if (voiceName !== 'auto') {
                     const voice = availableVoices.find(v => v.name === voiceName);
                     if (voice) utterance.voice = voice;
+                } else {
+                    // 自動模式：根據語言找到最佳匹配的語音
+                    const bestVoice = findBestVoice(lang);
+                    if (bestVoice) utterance.voice = bestVoice;
                 }
 
                 currentUtterance = utterance;
