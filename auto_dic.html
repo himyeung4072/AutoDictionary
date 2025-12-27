@@ -161,7 +161,14 @@
     <details style="margin-top: 15px; font-size: 12px;">
         <summary style="cursor: pointer; color: #666;">調試：查看可用語音</summary>
         <div id="voiceDebug" style="margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 6px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; font-family: monospace;"></div>
-        <button onclick="showVoiceDebug()" style="margin-top: 5px; padding: 5px 10px; font-size: 12px;">刷新語音列表</button>
+        <div style="margin-top: 5px; display: flex; gap: 5px;">
+            <button onclick="showVoiceDebug()" style="padding: 5px 10px; font-size: 12px;">刷新語音列表</button>
+            <button onclick="testVoice()" style="padding: 5px 10px; font-size: 12px; background: #007bff; color: white; border: none; border-radius: 4px;">測試語音</button>
+        </div>
+        <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 6px; font-size: 11px; color: #856404;">
+            <strong>iOS 26 已知問題：</strong>Apple 確認 iOS 26 存在語音選擇 bug，系統可能忽略指定的語音設定。<br>
+            <strong>臨時解決方案：</strong>請到「設定 → 輔助使用 → 朗讀內容 → 聲音」中，將普通話的預設語音設為「婷婷」。
+        </div>
     </details>
 </div>
 
@@ -583,11 +590,7 @@
                     availableVoices = freshVoices;
                 }
                 
-                // 開始朗讀
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.rate = rate;
-                
-                // iOS Safari 關鍵修復：必須先設定 voice，再設定 lang
+                // 找到要使用的語音
                 let selectedVoice = null;
                 
                 if (voiceName !== 'auto') {
@@ -598,61 +601,69 @@
                     selectedVoice = findBestVoice(lang);
                 }
                 
-                if (selectedVoice) {
-                    // iOS 26 workaround: 從新鮮的語音列表中獲取語音對象
-                    const freshVoice = availableVoices.find(v => 
-                        v.name === selectedVoice.name && v.lang === selectedVoice.lang
-                    );
-                    
-                    if (freshVoice) {
-                        utterance.voice = freshVoice;
-                        utterance.lang = freshVoice.lang;
-                        console.log(`Speaking with fresh voice: ${freshVoice.name} (${freshVoice.lang})`);
-                    } else {
-                        utterance.voice = selectedVoice;
-                        utterance.lang = selectedVoice.lang;
-                    }
-                    
-                    // 更新狀態顯示實際使用的語音
-                    const statusEl = document.getElementById('status');
-                    const currentStatus = statusEl.innerText;
-                    if (!currentStatus.includes('語音:')) {
-                        statusEl.innerText = currentStatus + ` [語音: ${selectedVoice.name}]`;
-                    }
-                } else {
-                    utterance.lang = lang;
-                    console.log(`No voice found, using lang: ${lang}`);
-                }
-
-                currentUtterance = utterance;
-                isSpeaking = true;
-
-                utterance.onend = () => {
-                    currentUtterance = null;
-                    isSpeaking = false;
-                    resolve();
-                };
-                utterance.onerror = (event) => {
-                    currentUtterance = null;
-                    isSpeaking = false;
-                    // 如果是因為暫停而中斷，不顯示錯誤
-                    if (event.error === 'interrupted' || event.error === 'canceled') {
-                        resolve();
-                        return;
-                    }
-                    console.error('語音合成錯誤:', event.error);
-                    const status = document.getElementById('status');
-                    if (event.error === 'not-allowed') {
-                        status.innerText = '錯誤：請允許語音權限';
-                    } else if (event.error === 'network') {
-                        status.innerText = '錯誤：網絡連接問題';
-                    } else {
-                        status.innerText = `朗讀錯誤: ${event.error || '未知錯誤'}`;
-                    }
-                    resolve();
-                };
+                // iOS 26 workaround: 先取消所有語音，等待一小段時間
+                synth.cancel();
                 
-                synth.speak(utterance);
+                setTimeout(() => {
+                    // 創建新的 utterance
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.rate = rate;
+                    
+                    if (selectedVoice) {
+                        // iOS 26 workaround: 從新鮮的語音列表中獲取語音對象
+                        const freshVoice = availableVoices.find(v => 
+                            v.name === selectedVoice.name && v.lang === selectedVoice.lang
+                        );
+                        
+                        const voiceToUse = freshVoice || selectedVoice;
+                        
+                        // iOS Safari 關鍵修復：必須先設定 voice，再設定 lang
+                        utterance.voice = voiceToUse;
+                        utterance.lang = voiceToUse.lang;
+                        
+                        console.log(`Speaking: "${text}" with voice: ${voiceToUse.name} (${voiceToUse.lang})`);
+                        
+                        // 更新狀態顯示實際使用的語音
+                        const statusEl = document.getElementById('status');
+                        const currentStatus = statusEl.innerText;
+                        if (!currentStatus.includes('語音:')) {
+                            statusEl.innerText = currentStatus + ` [語音: ${voiceToUse.name}]`;
+                        }
+                    } else {
+                        utterance.lang = lang;
+                        console.log(`No voice found, using lang: ${lang}`);
+                    }
+
+                    currentUtterance = utterance;
+                    isSpeaking = true;
+
+                    utterance.onend = () => {
+                        currentUtterance = null;
+                        isSpeaking = false;
+                        resolve();
+                    };
+                    utterance.onerror = (event) => {
+                        currentUtterance = null;
+                        isSpeaking = false;
+                        // 如果是因為暫停而中斷，不顯示錯誤
+                        if (event.error === 'interrupted' || event.error === 'canceled') {
+                            resolve();
+                            return;
+                        }
+                        console.error('語音合成錯誤:', event.error);
+                        const status = document.getElementById('status');
+                        if (event.error === 'not-allowed') {
+                            status.innerText = '錯誤：請允許語音權限';
+                        } else if (event.error === 'network') {
+                            status.innerText = '錯誤：網絡連接問題';
+                        } else {
+                            status.innerText = `朗讀錯誤: ${event.error || '未知錯誤'}`;
+                        }
+                        resolve();
+                    };
+                    
+                    synth.speak(utterance);
+                }, 50); // 短暫延遲讓 cancel 生效
             };
             
             waitForResume();
@@ -720,7 +731,11 @@
         
         let output = `找到 ${voices.length} 個語音\n`;
         output += `當前選擇語言: ${selectedLang}\n`;
-        output += `自動選擇語音: ${bestVoice ? `${bestVoice.name} (${bestVoice.lang})` : '無'}\n\n`;
+        output += `自動選擇語音: ${bestVoice ? `${bestVoice.name} (${bestVoice.lang})` : '無'}\n`;
+        if (bestVoice) {
+            output += `語音 URI: ${bestVoice.voiceURI}\n`;
+        }
+        output += '\n';
         
         // 分類顯示
         const zhVoices = voices.filter(v => v.lang.startsWith('zh') || v.lang.includes('yue') || v.lang.includes('cmn'));
@@ -728,10 +743,57 @@
         output += '=== 中文語音 ===\n';
         zhVoices.forEach(v => {
             const marker = (bestVoice && v.name === bestVoice.name) ? ' ✓ 已選' : '';
-            output += `${v.name} (${v.lang})${marker}\n`;
+            output += `${v.name} (${v.lang}) [${v.voiceURI}]${marker}\n`;
         });
         
         debugDiv.textContent = output;
+    }
+    
+    // 測試語音按鈕
+    function testVoice() {
+        const selectedLang = document.getElementById('langSelect').value;
+        const voice = findBestVoice(selectedLang);
+        const testText = selectedLang === 'zh-CN' ? '你好，這是普通話測試' : 
+                         selectedLang === 'zh-HK' ? '你好，呢個係粵語測試' : 
+                         'Hello, this is a voice test';
+        
+        // 取消任何正在進行的語音
+        synth.cancel();
+        
+        const utterance = new SpeechSynthesisUtterance(testText);
+        
+        if (voice) {
+            // iOS 26 workaround: 嘗試多種方式設定語音
+            utterance.voice = voice;
+            utterance.lang = voice.lang;
+            
+            console.log('Testing voice:', voice.name, voice.lang, voice.voiceURI);
+            
+            const debugDiv = document.getElementById('voiceDebug');
+            debugDiv.textContent += `\n\n=== 測試中 ===\n`;
+            debugDiv.textContent += `語音: ${voice.name}\n`;
+            debugDiv.textContent += `語言: ${voice.lang}\n`;
+            debugDiv.textContent += `URI: ${voice.voiceURI}\n`;
+            debugDiv.textContent += `文字: ${testText}\n`;
+        }
+        
+        utterance.rate = 0.9;
+        
+        utterance.onstart = () => {
+            console.log('Speech started');
+        };
+        
+        utterance.onend = () => {
+            console.log('Speech ended');
+        };
+        
+        utterance.onerror = (e) => {
+            console.error('Speech error:', e.error);
+            const debugDiv = document.getElementById('voiceDebug');
+            debugDiv.textContent += `錯誤: ${e.error}\n`;
+        };
+        
+        synth.speak(utterance);
     }
     
     // 語言選擇變更時更新調試信息
