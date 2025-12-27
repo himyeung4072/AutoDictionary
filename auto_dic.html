@@ -577,12 +577,17 @@
                     return;
                 }
                 
+                // iOS 26 workaround: 每次朗讀前重新獲取語音列表
+                const freshVoices = synth.getVoices();
+                if (freshVoices.length > 0) {
+                    availableVoices = freshVoices;
+                }
+                
                 // 開始朗讀
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.rate = rate;
                 
                 // iOS Safari 關鍵修復：必須先設定 voice，再設定 lang
-                // 如果只設定 lang，iOS 會忽略它
                 let selectedVoice = null;
                 
                 if (voiceName !== 'auto') {
@@ -590,15 +595,24 @@
                 }
                 
                 if (!selectedVoice) {
-                    // 自動模式：根據語言找到最佳匹配的語音
                     selectedVoice = findBestVoice(lang);
                 }
                 
                 if (selectedVoice) {
-                    utterance.voice = selectedVoice;
-                    // 使用語音的語言代碼，而不是用戶選擇的
-                    utterance.lang = selectedVoice.lang;
-                    console.log(`Speaking with voice: ${selectedVoice.name} (${selectedVoice.lang})`);
+                    // iOS 26 workaround: 從新鮮的語音列表中獲取語音對象
+                    const freshVoice = availableVoices.find(v => 
+                        v.name === selectedVoice.name && v.lang === selectedVoice.lang
+                    );
+                    
+                    if (freshVoice) {
+                        utterance.voice = freshVoice;
+                        utterance.lang = freshVoice.lang;
+                        console.log(`Speaking with fresh voice: ${freshVoice.name} (${freshVoice.lang})`);
+                    } else {
+                        utterance.voice = selectedVoice;
+                        utterance.lang = selectedVoice.lang;
+                    }
+                    
                     // 更新狀態顯示實際使用的語音
                     const statusEl = document.getElementById('status');
                     const currentStatus = statusEl.innerText;
