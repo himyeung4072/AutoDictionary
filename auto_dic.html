@@ -525,34 +525,37 @@
     function findBestVoice(lang) {
         if (availableVoices.length === 0) return null;
         
-        // iOS 上的語言代碼對照：
-        // 粵語: yue-HK (善怡)
-        // 普通話: zh-CN (婷婷)
-        // 台灣: zh-TW (美佳)
+        // iOS 上的語音名稱和語言代碼：
+        // 粵語: 善怡 (yue-HK)
+        // 普通話: 婷婷 (zh-CN)
+        // 台灣: 美佳 (zh-TW)
         
         let voice = null;
         
         if (lang === 'zh-HK') {
-            // 粵語：找 yue-HK
-            voice = availableVoices.find(v => v.lang === 'yue-HK');
+            // 粵語：優先用名稱「善怡」匹配
+            voice = availableVoices.find(v => v.name === '善怡');
+            if (!voice) voice = availableVoices.find(v => v.lang === 'yue-HK');
             if (!voice) voice = availableVoices.find(v => v.lang.includes('yue'));
-            if (!voice) voice = availableVoices.find(v => v.lang.includes('HK') && v.lang.startsWith('zh'));
+            if (!voice) voice = availableVoices.find(v => v.lang.includes('HK'));
         } else if (lang === 'zh-CN') {
-            // 普通話：找 zh-CN，必須排除 yue
-            voice = availableVoices.find(v => v.lang === 'zh-CN');
+            // 普通話：優先用名稱「婷婷」匹配
+            voice = availableVoices.find(v => v.name === '婷婷');
+            if (!voice) voice = availableVoices.find(v => v.lang === 'zh-CN');
             if (!voice) {
                 voice = availableVoices.find(v => 
                     v.lang.startsWith('zh') && 
                     !v.lang.includes('yue') && 
                     !v.lang.includes('TW') &&
-                    !v.lang.includes('HK')
+                    !v.lang.includes('HK') &&
+                    v.name !== '善怡' &&
+                    v.name !== '美佳'
                 );
             }
         } else if (lang === 'en-GB') {
             voice = availableVoices.find(v => v.lang === 'en-GB');
             if (!voice) voice = availableVoices.find(v => v.lang.startsWith('en'));
         } else {
-            // 通用匹配
             voice = availableVoices.find(v => v.lang === lang);
             if (!voice) voice = availableVoices.find(v => v.lang.startsWith(lang.split('-')[0]));
         }
@@ -596,6 +599,12 @@
                     // 使用語音的語言代碼，而不是用戶選擇的
                     utterance.lang = selectedVoice.lang;
                     console.log(`Speaking with voice: ${selectedVoice.name} (${selectedVoice.lang})`);
+                    // 更新狀態顯示實際使用的語音
+                    const statusEl = document.getElementById('status');
+                    const currentStatus = statusEl.innerText;
+                    if (!currentStatus.includes('語音:')) {
+                        statusEl.innerText = currentStatus + ` [語音: ${selectedVoice.name}]`;
+                    }
                 } else {
                     utterance.lang = lang;
                     console.log(`No voice found, using lang: ${lang}`);
