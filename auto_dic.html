@@ -270,13 +270,27 @@
         updateVoiceOptions();
     }
 
+    // 檢測是否為 iOS 設備
+    function isIOS() {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    }
+
     // 更新聲音選項
     function updateVoiceOptions() {
         const langSelect = document.getElementById('langSelect');
         const voiceSelect = document.getElementById('voiceSelect');
         const selectedLang = langSelect.value;
         
-        voiceSelect.innerHTML = '<option value="auto">自動</option>';
+        // iOS 26 workaround: 不使用「自動」，直接列出可用語音
+        // 因為 iOS 26 會忽略 voice 設定，使用系統預設語音
+        const isiOSDevice = isIOS();
+        
+        if (isiOSDevice) {
+            voiceSelect.innerHTML = ''; // iOS 上不提供「自動」選項
+        } else {
+            voiceSelect.innerHTML = '<option value="auto">自動</option>';
+        }
         
         // 根據選擇的語言過濾語音
         let filteredVoices = [];
@@ -305,7 +319,17 @@
             );
         }
         
-        filteredVoices.forEach((voice, index) => {
+        // iOS 26 workaround: 去重複（iOS 可能返回重複的語音）
+        const uniqueVoices = [];
+        const seenNames = new Set();
+        filteredVoices.forEach(voice => {
+            if (!seenNames.has(voice.name)) {
+                seenNames.add(voice.name);
+                uniqueVoices.push(voice);
+            }
+        });
+        
+        uniqueVoices.forEach((voice, index) => {
             const option = document.createElement('option');
             option.value = voice.name;
             
@@ -325,6 +349,36 @@
             option.textContent = label;
             voiceSelect.appendChild(option);
         });
+        
+        // iOS 26 workaround: 如果沒有選項，添加一個提示
+        if (voiceSelect.options.length === 0) {
+            const option = document.createElement('option');
+            option.value = 'auto';
+            option.textContent = '無可用語音';
+            voiceSelect.appendChild(option);
+        }
+        
+        // iOS: 顯示提示信息
+        updateiOSHint();
+    }
+    
+    // 更新 iOS 提示信息
+    function updateiOSHint() {
+        const isiOSDevice = isIOS();
+        let hintDiv = document.getElementById('iosHint');
+        
+        if (isiOSDevice) {
+            if (!hintDiv) {
+                hintDiv = document.createElement('div');
+                hintDiv.id = 'iosHint';
+                hintDiv.style.cssText = 'margin-top: 10px; padding: 10px; background: #e7f3ff; border-radius: 6px; font-size: 12px; color: #0066cc;';
+                const controlsDiv = document.querySelector('.controls');
+                controlsDiv.parentNode.insertBefore(hintDiv, controlsDiv.nextSibling);
+            }
+            hintDiv.innerHTML = '<strong>💡 iOS 用戶提示：</strong>請在「選擇聲音」中手動選擇語音（如：婷婷 = 普通話，善怡 = 粵語）';
+        } else if (hintDiv) {
+            hintDiv.remove();
+        }
     }
 
     if (synth.onvoiceschanged !== undefined) {
