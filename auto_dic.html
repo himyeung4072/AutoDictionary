@@ -165,10 +165,6 @@
             <button onclick="showVoiceDebug()" style="padding: 5px 10px; font-size: 12px;">刷新語音列表</button>
             <button onclick="testVoice()" style="padding: 5px 10px; font-size: 12px; background: #007bff; color: white; border: none; border-radius: 4px;">測試語音</button>
         </div>
-        <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 6px; font-size: 11px; color: #856404;">
-            <strong>iOS 26 已知問題：</strong>Apple 確認 iOS 26 存在語音選擇 bug，系統可能忽略指定的語音設定。<br>
-            <strong>臨時解決方案：</strong>請到「設定 → 輔助使用 → 朗讀內容 → 聲音」中，將普通話的預設語音設為「婷婷」。
-        </div>
     </details>
 </div>
 
@@ -366,20 +362,53 @@
     function updateiOSHint() {
         const isiOSDevice = isIOS();
         let hintDiv = document.getElementById('iosHint');
+        const selectedLang = document.getElementById('langSelect').value;
         
         if (isiOSDevice) {
             if (!hintDiv) {
                 hintDiv = document.createElement('div');
                 hintDiv.id = 'iosHint';
-                hintDiv.style.cssText = 'margin-top: 10px; padding: 10px; background: #e7f3ff; border-radius: 6px; font-size: 12px; color: #0066cc;';
+                hintDiv.style.cssText = 'margin-top: 10px; padding: 12px; background: #fff3cd; border-radius: 6px; font-size: 13px; color: #856404; border: 1px solid #ffc107;';
                 const controlsDiv = document.querySelector('.controls');
                 controlsDiv.parentNode.insertBefore(hintDiv, controlsDiv.nextSibling);
             }
-            hintDiv.innerHTML = '<strong>💡 iOS 用戶提示：</strong>請在「選擇聲音」中手動選擇語音（如：婷婷 = 普通話，善怡 = 粵語）';
+            
+            // 根據選擇的語言顯示不同的提示
+            if (selectedLang === 'zh-CN') {
+                hintDiv.innerHTML = `
+                    <strong>⚠️ iOS 普通話設定</strong><br>
+                    由於 iOS 26 系統限制，請按以下步驟設定：<br>
+                    <ol style="margin: 8px 0 0 0; padding-left: 20px;">
+                        <li>打開 iPhone「設定」</li>
+                        <li>進入「輔助使用」→「朗讀內容」→「聲音」</li>
+                        <li>選擇「中文」→「中文（普通話）」</li>
+                        <li>選擇「婷婷」作為預設語音</li>
+                    </ol>
+                `;
+            } else if (selectedLang === 'zh-HK') {
+                hintDiv.innerHTML = `
+                    <strong>✅ iOS 粵語</strong><br>
+                    系統預設已支援粵語（善怡），無需額外設定。
+                `;
+                hintDiv.style.background = '#d4edda';
+                hintDiv.style.color = '#155724';
+                hintDiv.style.borderColor = '#28a745';
+            } else {
+                hintDiv.innerHTML = `
+                    <strong>💡 iOS 用戶提示</strong><br>
+                    如語音不正確，請到「設定 → 輔助使用 → 朗讀內容 → 聲音」中設定對應語言的預設語音。
+                `;
+                hintDiv.style.background = '#e7f3ff';
+                hintDiv.style.color = '#0066cc';
+                hintDiv.style.borderColor = '#007bff';
+            }
         } else if (hintDiv) {
             hintDiv.remove();
         }
     }
+    
+    // 語言選擇變更時更新提示
+    document.getElementById('langSelect').addEventListener('change', updateiOSHint);
 
     if (synth.onvoiceschanged !== undefined) {
         synth.onvoiceschanged = loadVoices;
