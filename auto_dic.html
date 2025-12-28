@@ -205,7 +205,6 @@
             height: 100%;
             background: linear-gradient(90deg, var(--color-primary), var(--color-primary-dark));
             border-radius: 2px;
-            transition: width 0.3s ease;
             width: 0%;
         }
         
@@ -767,7 +766,6 @@
             <div class="progress-bar-inline">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
-            <span class="progress-count-inline" id="progressCount"></span>
         </div>
     </div>
     <div class="player-status">
@@ -813,29 +811,151 @@
     let progressState = {
         currentIndex: 0,
         totalItems: 0,
-        currentItem: ''
+        currentItem: '',
+        animationId: null
     };
 
+    // 停止進度條動畫
+    function stopProgressAnimation() {
+        if (progressState.animationId) {
+            cancelAnimationFrame(progressState.animationId);
+            progressState.animationId = null;
+        }
+    }
+
+    // 漸進式更新進度條
+    function animateProgressTo(targetPercent, duration) {
+        stopProgressAnimation();
+        
+        const progressFill = document.getElementById('progressFill');
+        if (!progressFill) return;
+        
+        const startPercent = parseFloat(progressFill.style.width) || 0;
+        let startTime = performance.now();
+        let pausedTime = 0;
+        let wasPaused = false;
+        
+        function animate(currentTime) {
+            if (isStopped) {
+                stopProgressAnimation();
+                return;
+            }
+            
+            if (isPaused) {
+                if (!wasPaused) {
+                    // 剛進入暫停狀態，記錄已經過的時間
+                    pausedTime = currentTime - startTime;
+                    wasPaused = true;
+                }
+                // 暫停時繼續監聽，但不更新進度
+                progressState.animationId = requestAnimationFrame(animate);
+                return;
+            }
+            
+            if (wasPaused) {
+                // 從暫停恢復，調整起始時間
+                startTime = currentTime - pausedTime;
+                wasPaused = false;
+            }
+            
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // 線性進度，保持均勻速度
+            const currentPercent = startPercent + (targetPercent - startPercent) * progress;
+            
+            progressFill.style.width = currentPercent + '%';
+            
+            if (progress < 1) {
+                progressState.animationId = requestAnimationFrame(animate);
+            }
+        }
+        
+        progressState.animationId = requestAnimationFrame(animate);
+    }
+
+    // 從指定起點到終點的漸進式進度條動畫
+    function animateProgressFromTo(startPercent, endPercent, duration) {
+        stopProgressAnimation();
+        
+        const progressFill = document.getElementById('progressFill');
+        if (!progressFill) return;
+        
+        // 設定起始位置
+        progressFill.style.width = startPercent + '%';
+        
+        let startTime = performance.now();
+        let pausedTime = 0;
+        let wasPaused = false;
+        
+        function animate(currentTime) {
+            if (isStopped) {
+                stopProgressAnimation();
+                return;
+            }
+            
+            if (isPaused) {
+                if (!wasPaused) {
+                    // 剛進入暫停狀態，記錄已經過的時間
+                    pausedTime = currentTime - startTime;
+                    wasPaused = true;
+                }
+                // 暫停時繼續監聽，但不更新進度
+                progressState.animationId = requestAnimationFrame(animate);
+                return;
+            }
+            
+            if (wasPaused) {
+                // 從暫停恢復，調整起始時間
+                startTime = currentTime - pausedTime;
+                wasPaused = false;
+            }
+            
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // 線性進度，保持均勻速度
+            const currentPercent = startPercent + (endPercent - startPercent) * progress;
+            
+            progressFill.style.width = currentPercent + '%';
+            
+            if (progress < 1) {
+                progressState.animationId = requestAnimationFrame(animate);
+            }
+        }
+        
+        progressState.animationId = requestAnimationFrame(animate);
+    }
+
     // Update progress bar and text
-    function updateProgress(current, total) {
+    function updateProgress(current, total, duration = 0) {
         if (total <= 0) {
+            stopProgressAnimation();
             const progressFill = document.getElementById('progressFill');
-            const progressCount = document.getElementById('progressCount');
             if (progressFill) progressFill.style.width = '0%';
-            if (progressCount) progressCount.textContent = '';
             return;
         }
         const safeIndex = Math.max(0, Math.min(current, total));
         const percentage = (safeIndex / total) * 100;
         
-        const progressFill = document.getElementById('progressFill');
-        const progressCount = document.getElementById('progressCount');
-        
-        if (progressFill) {
-            progressFill.style.width = percentage + '%';
+        if (duration > 0) {
+            // 漸進式動畫
+            animateProgressTo(percentage, duration);
+        } else {
+            // 立即更新
+            stopProgressAnimation();
+            const progressFill = document.getElementById('progressFill');
+            if (progressFill) {
+                progressFill.style.width = percentage + '%';
+            }
         }
-        if (progressCount) {
-            progressCount.textContent = safeIndex + ' / ' + total;
+        
+        // 更新狀態列的進度顯示
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        const statusCount = document.getElementById('statusCount');
+        if (statusCount) {
+            const label = mode === 'word' ? '詞語' : '句子';
+            statusCount.textContent = `${label} ${safeIndex}/${total} 個`;
         }
         
         progressState.currentIndex = safeIndex;
@@ -857,14 +977,12 @@
 
     // Reset progress to initial state
     function resetProgress() {
+        stopProgressAnimation();
         const progressFill = document.getElementById('progressFill');
         if (progressFill) {
             progressFill.style.width = '0%';
         }
-        const progressCount = document.getElementById('progressCount');
-        if (progressCount) {
-            progressCount.textContent = '';
-        }
+        updateWordCounter();
         updateStatus('', '');
     }
 
@@ -2102,16 +2220,42 @@
         const lines = text.split('\n').map(s => s.trim()).filter(s => s !== "");
         if (lines.length === 0) return;
 
-        // Initialize progress
-        updateProgress(0, lines.length);
+        // 預估每個詞語的朗讀時間（毫秒）
+        const estimatedSpeakTime = 1500 / speechRate;
+
+        // 先計算每個詞語的時間和總時間
+        const wordTimes = lines.map(line => {
+            const waitTime = calculateWordWaitTime(line, lang, charWaitTime);
+            const waitPerRepeat = waitTime / repeatPerLine;
+            return (estimatedSpeakTime + waitPerRepeat) * repeatPerLine;
+        });
+        const totalTime = wordTimes.reduce((sum, t) => sum + t, 0);
+        
+        // 計算每個詞語的進度區間（根據時間佔比）
+        let accumulatedPercent = 0;
+        const progressRanges = wordTimes.map(time => {
+            const start = accumulatedPercent;
+            const percent = (time / totalTime) * 100;
+            accumulatedPercent += percent;
+            return { start, end: accumulatedPercent, duration: time };
+        });
 
         for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
             const line = lines[lineIdx];
             if (isStopped) break;
 
-            // 計算等待時間 = 字數 × 每字書寫時間（與讀文章邏輯相同）
-            const totalWaitTime = calculateWordWaitTime(line, lang, charWaitTime);
-            const waitPerRepeat = totalWaitTime / repeatPerLine;
+            const { start, end, duration } = progressRanges[lineIdx];
+            const waitTime = calculateWordWaitTime(line, lang, charWaitTime);
+            const waitPerRepeat = waitTime / repeatPerLine;
+            
+            // 更新狀態列文字
+            const statusCount = document.getElementById('statusCount');
+            if (statusCount) {
+                statusCount.textContent = `詞語 ${lineIdx + 1}/${lines.length} 個`;
+            }
+            
+            // 漸進式進度條：根據時間佔比分配區間
+            animateProgressFromTo(start, end, duration);
 
             for (let i = 1; i <= repeatPerLine; i++) {
                 if (isStopped) break;
@@ -2136,12 +2280,12 @@
                     await wait(waitPerRepeat, true);
                 }
             }
-
-            // Update progress after completing each word
-            if (!isStopped) {
-                updateProgress(lineIdx + 1, lines.length);
-            }
         }
+        
+        // 確保最後進度條到達 100%
+        stopProgressAnimation();
+        const progressFill = document.getElementById('progressFill');
+        if (progressFill) progressFill.style.width = '100%';
     }
 
     async function readArticle(text, lang, selectedVoice) {
@@ -2151,16 +2295,44 @@
         const sentences = splitIntoSentences(text);
         if (sentences.length === 0) return;
 
-        // Initialize progress
-        updateProgress(0, sentences.length);
+        // 預估每個字的朗讀時間（毫秒）
+        const msPerChar = 200 / speechRate;
+
+        // 先計算每個句子的時間和總時間
+        const sentenceTimes = sentences.map(sentence => {
+            const waitTime = calculateWaitTime(sentence, lang);
+            const waitPerRepeat = waitTime / sentenceRepeat;
+            const charCount = sentence.length;
+            const estimatedSpeakTime = charCount * msPerChar;
+            return (estimatedSpeakTime + waitPerRepeat) * sentenceRepeat;
+        });
+        const totalTime = sentenceTimes.reduce((sum, t) => sum + t, 0);
+        
+        // 計算每個句子的進度區間（根據時間佔比）
+        let accumulatedPercent = 0;
+        const progressRanges = sentenceTimes.map(time => {
+            const start = accumulatedPercent;
+            const percent = (time / totalTime) * 100;
+            accumulatedPercent += percent;
+            return { start, end: accumulatedPercent, duration: time };
+        });
 
         for (let idx = 0; idx < sentences.length; idx++) {
             const sentence = sentences[idx];
             if (isStopped) break;
 
-            // 計算每次朗讀後的等待時間 = 總等待時間 / 朗讀次數
+            const { start, end, duration } = progressRanges[idx];
             const totalWaitTime = calculateWaitTime(sentence, lang);
             const waitPerRepeat = totalWaitTime / sentenceRepeat;
+            
+            // 更新狀態列文字
+            const statusCount = document.getElementById('statusCount');
+            if (statusCount) {
+                statusCount.textContent = `句子 ${idx + 1}/${sentences.length} 個`;
+            }
+            
+            // 漸進式進度條：根據時間佔比分配區間
+            animateProgressFromTo(start, end, duration);
 
             for (let i = 1; i <= sentenceRepeat; i++) {
                 if (isStopped) break;
@@ -2185,12 +2357,12 @@
                     await wait(waitPerRepeat, true);
                 }
             }
-
-            // Update progress after completing each sentence
-            if (!isStopped) {
-                updateProgress(idx + 1, sentences.length);
-            }
         }
+        
+        // 確保最後進度條到達 100%
+        stopProgressAnimation();
+        const progressFill = document.getElementById('progressFill');
+        if (progressFill) progressFill.style.width = '100%';
     }
 
     let currentUtterance = null;
