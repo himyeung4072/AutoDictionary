@@ -86,7 +86,7 @@
         label { display: block; font-size: var(--font-size-sm); font-weight: bold; margin-bottom: 5px; color: var(--color-text-secondary); }
         input, select { width: 100%; padding: 10px; border: 1px solid var(--color-border); border-radius: var(--radius-md); box-sizing: border-box; font-size: var(--font-size-md); min-height: var(--touch-target-min); }
         .btn-group { display: flex; gap: 10px; margin-top: 10px; }
-        button { flex: 1; padding: var(--spacing-md); border: none; border-radius: var(--radius-md); cursor: pointer; font-size: var(--font-size-md); font-weight: bold; min-height: var(--touch-target-min); }
+        button { flex: 1; padding: var(--spacing-md); border: none; border-radius: var(--radius-md); cursor: pointer; font-size: var(--font-size-md); font-weight: bold; min-height: var(--touch-target-min); -webkit-tap-highlight-color: transparent; }
         #startBtn { background: var(--color-primary); color: white; }
         #pauseBtn { background: var(--color-warning); color: var(--color-text); }
         #stopBtn { background: var(--color-danger); color: white; }
@@ -130,20 +130,20 @@
         .mode-tabs, .lang-tabs {
             display: flex;
             background: #f0f0f0;
-            border-radius: var(--radius-xl);
-            padding: var(--spacing-xs);
-            margin-bottom: 15px;
+            border-radius: var(--radius-lg);
+            padding: 3px;
+            margin-bottom: 12px;
             position: relative;
         }
         
         /* Sliding background indicator */
         .tab-indicator {
             position: absolute;
-            top: var(--spacing-xs);
-            bottom: var(--spacing-xs);
+            top: 3px;
+            bottom: 3px;
             background: var(--color-surface);
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: var(--radius-md);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
             transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1), width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 0;
             pointer-events: none;
@@ -151,19 +151,20 @@
         
         .mode-tab, .lang-tab {
             flex: 1;
-            padding: 14px;
+            padding: 8px 12px;
             text-align: center;
-            border-radius: 10px;
+            border-radius: var(--radius-md);
             font-weight: 600;
             border: none;
             background: transparent;
             cursor: pointer;
             transition: color 0.3s ease;
-            min-height: var(--touch-target-min);
-            font-size: var(--font-size-md);
+            min-height: 36px;
+            font-size: var(--font-size-sm);
             color: var(--color-text-secondary);
             position: relative;
             z-index: 1;
+            -webkit-tap-highlight-color: transparent;
         }
         
         .mode-tab:hover, .lang-tab:hover {
@@ -172,6 +173,10 @@
         
         .mode-tab:focus, .lang-tab:focus {
             outline: none;
+        }
+        
+        .mode-tab:active, .lang-tab:active {
+            background: transparent;
         }
         
         .mode-tab.active, .lang-tab.active {
@@ -202,21 +207,35 @@
             left: 0;
             right: 0;
             background: var(--color-surface);
-            padding: var(--spacing-md) var(--spacing-lg);
-            padding-bottom: calc(var(--spacing-md) + var(--safe-area-inset-bottom));
+            padding: var(--spacing-sm) var(--spacing-lg);
+            padding-bottom: calc(var(--spacing-sm) + var(--safe-area-inset-bottom));
             box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
             z-index: 100;
             display: flex;
-            gap: var(--spacing-md); /* 12px gap for better touch separation */
+            gap: var(--spacing-sm);
         }
         
         .player-controls button {
             flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 12px;
+            min-height: 40px;
+            font-size: var(--font-size-sm);
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .player-controls button svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
         }
         
         /* Main content area - add padding to prevent overlap with fixed controls */
         .main-content {
-            padding-bottom: calc(120px + var(--safe-area-inset-bottom)); /* Space for fixed player controls + safe area */
+            padding-bottom: calc(80px + var(--safe-area-inset-bottom)); /* Space for fixed player controls + safe area */
         }
         
         /* Progress Section Styles */
@@ -281,6 +300,7 @@
             align-items: center;
             list-style: none;
             min-height: var(--touch-target-min);
+            -webkit-tap-highlight-color: transparent;
         }
         
         .settings-panel summary::-webkit-details-marker {
@@ -363,6 +383,7 @@
             transition: all 0.2s ease;
             min-height: 40px;
             white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
         }
         
         .segmented-control .segment:hover {
@@ -406,6 +427,7 @@
             appearance: none;
             padding: 0;
             min-height: var(--touch-target-min);
+            -webkit-tap-highlight-color: transparent;
         }
         
         .stepper-control .stepper-btn svg {
@@ -593,7 +615,7 @@
             
             /* Adjust main content padding on mobile for fixed controls + safe area */
             .main-content {
-                padding-bottom: calc(120px + var(--safe-area-inset-bottom));
+                padding-bottom: calc(80px + var(--safe-area-inset-bottom));
             }
             
             /* Hide debug section on mobile by default */
@@ -604,8 +626,8 @@
         
         /* iOS Hint Collapsible Styles */
         .ios-hint-details {
-            margin-top: 10px;
-            margin-bottom: 15px;
+            margin-top: 8px;
+            margin-bottom: 12px;
             background: #fff3cd;
             border: 1px solid #ffc107;
             border-radius: var(--radius-md);
@@ -614,13 +636,13 @@
         }
         
         .ios-hint-summary {
-            padding: 12px;
+            padding: 8px 12px;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
             list-style: none;
-            min-height: 44px;
+            min-height: 36px;
             user-select: none;
         }
         
@@ -634,6 +656,7 @@
         
         .ios-hint-title {
             font-weight: 600;
+            font-size: 12px;
         }
         
         .ios-hint-arrow {
@@ -644,8 +667,8 @@
         }
         
         .ios-hint-arrow svg {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
         }
         
         /* Show down arrow when collapsed, up arrow when expanded */
@@ -666,19 +689,20 @@
         }
         
         .ios-hint-content {
-            padding: 0 12px 12px 12px;
+            padding: 0 12px 10px 12px;
             border-top: 1px solid rgba(133, 100, 4, 0.2);
             margin-top: 0;
-            padding-top: 10px;
+            padding-top: 8px;
+            font-size: 12px;
         }
         
         .ios-hint-content ol {
-            margin: 8px 0 0 0;
-            padding-left: 20px;
+            margin: 6px 0 0 0;
+            padding-left: 18px;
         }
         
         .ios-hint-content li {
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
     </style>
 </head>
@@ -884,9 +908,19 @@
 
 <!-- Fixed Bottom Player Controls -->
 <div class="player-controls" role="group" aria-label="播放控制">
-    <button id="startBtn" onclick="startReading()" aria-label="開始朗讀">開始</button>
-    <button id="pauseBtn" onclick="togglePause()" disabled aria-label="暫停朗讀">暫停</button>
-    <button id="stopBtn" onclick="stopReading()" disabled aria-label="取消朗讀">取消</button>
+    <button id="startBtn" onclick="startReading()" aria-label="開始朗讀">
+        開始
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+    <button id="pauseBtn" onclick="togglePause()" disabled aria-label="暫停朗讀">
+        <span class="pause-text">暫停</span>
+        <svg class="pause-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        <svg class="resume-icon" style="display:none" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+    <button id="stopBtn" onclick="stopReading()" disabled aria-label="取消朗讀">
+        取消
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+    </button>
 </div>
 
 <script>
@@ -2397,6 +2431,9 @@
     function togglePause() {
         const btn = document.getElementById('pauseBtn');
         const status = document.getElementById('status');
+        const pauseText = btn.querySelector('.pause-text');
+        const pauseIcon = btn.querySelector('.pause-icon');
+        const resumeIcon = btn.querySelector('.resume-icon');
         
         if (!isPaused) {
             isPaused = true;
@@ -2407,21 +2444,31 @@
             // 直接取消當前語音
             synth.cancel();
             isSpeaking = false;
-            btn.innerText = "恢復";
+            pauseText.textContent = "恢復";
+            pauseIcon.style.display = 'none';
+            resumeIcon.style.display = 'block';
             status.innerText = "⏸️ 暫停中...";
             status.classList.add('paused');
             status.classList.remove('reading', 'waiting');
         } else {
             isPaused = false;
             skipNextWait = true;  // 恢復後跳過等待
-            btn.innerText = "暫停";
+            pauseText.textContent = "暫停";
+            pauseIcon.style.display = 'block';
+            resumeIcon.style.display = 'none';
             status.classList.remove('paused');
         }
     }
 
     function resetButtons() {
         setButtonsState(false);
-        document.getElementById('pauseBtn').innerText = "暫停";
+        const btn = document.getElementById('pauseBtn');
+        const pauseText = btn.querySelector('.pause-text');
+        const pauseIcon = btn.querySelector('.pause-icon');
+        const resumeIcon = btn.querySelector('.resume-icon');
+        pauseText.textContent = "暫停";
+        pauseIcon.style.display = 'block';
+        resumeIcon.style.display = 'none';
     }
 
     function stopReading() {
