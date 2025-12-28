@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>詞語重複朗讀器</title>
+    <style>
+        body { font-family: "Microsoft JhengHei", sans-serif; padding: 20px; line-height: 1.6; max-width: 500px; margin: auto; background-color: #f0f2f5; }
+        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { color: #333; text-align: center; margin-top: 0; }
+        textarea { width: 100%; height: 150px; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .controls > div { display: flex; flex-direction: column; }
+        .number-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 5px; color: #555; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; }
+        #startBtn { background: #28a745; color: white; }
+        #pauseBtn { background: #ffc107; color: #333; }
+        #stopBtn { background: #dc3545; color: white; }
+        button:disabled { background: #ccc !important; cursor: not-allowed; }
+        .status { text-align: center; margin-top: 15px; font-size: 14px; color: #007bff; min-height: 20px; font-weight: bold; }
+        .mode-toggle { display: flex; gap: 10px; margin-bottom: 15px; }
+        .mode-toggle label { display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: normal; }
+        .mode-toggle input[type="radio"] { width: auto; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>默書神器</h2>
+    
+    <div class="controls">
+        <div>
+            <label>選擇語言：</label>
+            <select id="langSelect">
+                <option value="zh-HK">粵語</option>
+                <option value="zh-CN">普通話</option>
+                <option value="en-GB">英語</option>
+            </select>
+        </div>
+        <div>
+            <label>選擇聲音：</label>
+            <select id="voiceSelect">
+                <option value="auto">自動</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="mode-toggle">
+        <label><input type="radio" name="mode" value="word" checked onchange="toggleMode()"> 讀詞語</label>
+        <label><input type="radio" name="mode" value="article" onchange="toggleMode()"> 讀文章</label>
+    </div>
+
+    <label id="inputLabel">輸入詞語（每行一個）：</label>
+    <textarea id="words" placeholder="蘋果&#10;香蕉"></textarea>
+
+    <div id="wordControls" class="number-controls">
+        <div>
+            <label>每行朗讀次數：</label>
+            <input type="number" id="repeatCount" value="3" min="1">
+        </div>
+        <div>
+            <label>相隔秒數：</label>
+            <input type="number" id="interval" value="5" min="0" step="0.5">
+        </div>
+    </div>
+
+    <div id="articleControls" class="number-controls hidden">
+        <div>
+            <label>朗讀速度：</label>
+            <select id="speechRate">
+                <option value="0.5">很慢</option>
+                <option value="0.7">慢</option>
+                <option value="0.9" selected>正常</option>
+                <option value="1.1">快</option>
+                <option value="1.3">很快</option>
+            </select>
+        </div>
+        <div>
+            <label>朗讀句子次數：</label>
+            <input type="number" id="sentenceRepeat" value="2" min="1">
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <button id="startBtn" onclick="startReading()">開始</button>
+        <button id="pauseBtn" onclick="togglePause()" disabled>暫停</button>
+        <button id="stopBtn" onclick="stopReading()" disabled>取消</button>
+    </div>
+
+    <div id="status" class="status"></div>
+</div>
+
+<script>
+    let synth = window.speechSynthesis;
+    let isStopped = false;
+    let isPaused = false;
+    let availableVoices = [];
+
+    // 切換模式
+    function toggleMode() {
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        const wordControls = document.getElementById('wordControls');
+        const articleControls = document.getElementById('articleControls');
+        const inputLabel = document.getElementById('inputLabel');
+        const textarea = document.getElementById('words');
+        
+        if (mode === 'word') {
+            wordControls.classList.remove('hidden');
+            articleControls.classList.add('hidden');
+            inputLabel.textContent = '輸入詞語（每行一個）：';
+            textarea.placeholder = '蘋果\n香蕉';
+        } else {
+            wordControls.classList.add('hidden');
+            articleControls.classList.remove('hidden');
+            inputLabel.textContent = '輸入文章：';
+            textarea.placeholder = '今天天氣很好。我們一起去公園玩吧！';
+        }
+    }
+
+    // 載入可用聲音
+    function loadVoices() {
+        availableVoices = synth.getVoices();
+        updateVoiceOptions();
+    }
+
+    // 更新聲音選項
+    function updateVoiceOptions() {
+        const langSelect = document.getElementById('langSelect');
+        const voiceSelect = document.getElementById('voiceSelect');
+        const selectedLang = langSelect.value;
+        
+        // 清空現有選項
+        voiceSelect.innerHTML = '<option value="auto">自動</option>';
+        
+        // 根據選擇的語言篩選聲音
+        const filteredVoices = availableVoices.filter(voice => 
+            voice.lang.startsWith(selectedLang.split('-')[0]) || 
+            voice.lang === selectedLang
+        );
+        
+        // 添加聲音選項
+        filteredVoices.forEach((voice, index) => {
+            const option = document.createElement('option');
+            option.value = voice.name;
+            const gender = voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman') ? '(女聲)' : 
+                          voice.name.toLowerCase().includes('male') || voice.name.toLowerCase().includes('man') ? '(男聲)' : '';
+            option.textContent = `${voice.name} ${gender}`;
+            voiceSelect.appendChild(option);
+        });
+    }
+
+    // 語音載入完成後更新選項
+    if (synth.onvoiceschanged !== undefined) {
+        synth.onvoiceschanged = loadVoices;
+    }
+    
+    // 語言改變時更新聲音選項
+    document.getElementById('langSelect').addEventListener('change', updateVoiceOptions);
+    
+    // 初始載入
+    setTimeout(loadVoices, 100);
+
+    // 核心等待函數：支援暫停檢查和間隔計時
+    function wait(ms) {
+        return new Promise(resolve => {
+            const start = Date.now();
+            const timer = setInterval(() => {
+                if (isStopped) {
+                    clearInterval(timer);
+                    resolve();
+                } else if (!isPaused) {
+                    if (Date.now() - start >= ms) {
+                        clearInterval(timer);
+                        resolve();
+                    }
+                }
+            }, 100);
+            window.currentTimer = timer;
+        });
+    }
+
+    // 分割文章為句子（根據標點符號）
+    function splitIntoSentences(text) {
+        // 中英文標點符號
+        const punctuation = /([。！？；，、．.!?;,])/g;
+        const parts = text.split(punctuation).filter(s => s.trim() !== '');
+        
+        const sentences = [];
+        for (let i = 0; i < parts.length; i++) {
+            let sentence = parts[i].trim();
+            // 如果下一個是標點符號，合併
+            if (i + 1 < parts.length && punctuation.test(parts[i + 1])) {
+                sentence += parts[i + 1];
+                i++;
+            }
+            if (sentence.trim() !== '' && !/^[。！？；，、．.!?;,]$/.test(sentence)) {
+                sentences.push(sentence.trim());
+            }
+        }
+        return sentences;
+    }
+
+    // 計算等待時間
+    function calculateWaitTime(sentence, lang) {
+        if (lang.startsWith('zh')) {
+            // 中文：每個字 3 秒
+            const charCount = sentence.replace(/[^\u4e00-\u9fff]/g, '').length;
+            return charCount * 3 * 1000;
+        } else {
+            // 英文：每個詞 2 秒
+            const wordCount = sentence.split(/\s+/).filter(w => w.length > 0).length;
+            return wordCount * 2 * 1000;
+        }
+    }
+
+    async function startReading() {
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        const text = document.getElementById('words').value;
+        const lang = document.getElementById('langSelect').value;
+        const selectedVoice = document.getElementById('voiceSelect').value;
+        
+        if (text.trim() === '') return alert("請輸入內容");
+
+        // 初始化狀態
+        isStopped = false;
+        isPaused = false;
+        setButtonsState(true);
+        const status = document.getElementById('status');
+
+        if (mode === 'word') {
+            await readWords(text, lang, selectedVoice, status);
+        } else {
+            await readArticle(text, lang, selectedVoice, status);
+        }
+
+        if (!isStopped) status.innerText = "播放完畢";
+        stopReading();
+    }
+
+    async function readWords(text, lang, selectedVoice, status) {
+        const repeatPerLine = parseInt(document.getElementById('repeatCount').value);
+        const interval = parseFloat(document.getElementById('interval').value) * 1000;
+        
+        const lines = text.split('\n').map(s => s.trim()).filter(s => s !== "");
+        if (lines.length === 0) return;
+
+        for (let line of lines) {
+            if (isStopped) break;
+
+            for (let i = 1; i <= repeatPerLine; i++) {
+                if (isStopped) break;
+
+                status.innerText = `正在朗讀: ${line} (第 ${i}/${repeatPerLine} 次)`;
+                
+                await speakPromise(line, lang, selectedVoice, 0.9);
+                
+                while (isPaused && !isStopped) {
+                    await new Promise(r => setTimeout(r, 200));
+                }
+
+                if (!(line === lines[lines.length-1] && i === repeatPerLine)) {
+                    await wait(interval);
+                }
+            }
+        }
+    }
+
+    async function readArticle(text, lang, selectedVoice, status) {
+        const speechRate = parseFloat(document.getElementById('speechRate').value);
+        const sentenceRepeat = parseInt(document.getElementById('sentenceRepeat').value);
+        
+        const sentences = splitIntoSentences(text);
+        if (sentences.length === 0) return;
+
+        for (let idx = 0; idx < sentences.length; idx++) {
+            const sentence = sentences[idx];
+            if (isStopped) break;
+
+            for (let i = 1; i <= sentenceRepeat; i++) {
+                if (isStopped) break;
+
+                status.innerText = `正在朗讀 (${idx + 1}/${sentences.length}): ${sentence} (第 ${i}/${sentenceRepeat} 次)`;
+                
+                await speakPromise(sentence, lang, selectedVoice, speechRate);
+                
+                while (isPaused && !isStopped) {
+                    await new Promise(r => setTimeout(r, 200));
+                }
+            }
+
+            // 句子朗讀完畢後的等待時間（最後一句不等待）
+            if (idx < sentences.length - 1 && !isStopped) {
+                const waitTime = calculateWaitTime(sentence, lang);
+                status.innerText = `等待中... (${Math.round(waitTime / 1000)} 秒)`;
+                await wait(waitTime);
+            }
+        }
+    }
+
+    function speakPromise(text, lang, voiceName, rate) {
+        return new Promise((resolve) => {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang;
+            utterance.rate = rate;
+
+            // 設定指定的聲音
+            if (voiceName !== 'auto') {
+                const voice = availableVoices.find(v => v.name === voiceName);
+                if (voice) {
+                    utterance.voice = voice;
+                }
+            }
+
+            utterance.onend = () => resolve();
+            utterance.onerror = () => resolve();
+            
+            // 如果在暫停狀態，先不要開始說話
+            const checkPause = setInterval(() => {
+                if (isStopped) {
+                    clearInterval(checkPause);
+                    resolve();
+                } else if (!isPaused) {
+                    clearInterval(checkPause);
+                    synth.speak(utterance);
+                }
+            }, 200);
+        });
+    }
+
+    function togglePause() {
+        const btn = document.getElementById('pauseBtn');
+        if (!isPaused) {
+            isPaused = true;
+            synth.pause();
+            btn.innerText = "恢復";
+            document.getElementById('status').innerText = "暫停中...";
+        } else {
+            isPaused = false;
+            synth.resume();
+            btn.innerText = "暫停";
+        }
+    }
+
+    function stopReading() {
+        isStopped = true;
+        isPaused = false;
+        synth.cancel();
+        if (window.currentTimer) clearInterval(window.currentTimer);
+        setButtonsState(false);
+        document.getElementById('pauseBtn').innerText = "暫停";
+        if (isStopped) document.getElementById('status').innerText = "已取消";
+    }
+
+    function setButtonsState(running) {
+        document.getElementById('startBtn').disabled = running;
+        document.getElementById('pauseBtn').disabled = !running;
+        document.getElementById('stopBtn').disabled = !running;
+    }
+</script>
+
+</body>
+</html>

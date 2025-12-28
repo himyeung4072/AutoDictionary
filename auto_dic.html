@@ -2,170 +2,798 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>詞語重複朗讀器</title>
     <style>
-        body { font-family: "Microsoft JhengHei", sans-serif; padding: 20px; line-height: 1.6; max-width: 500px; margin: auto; background-color: #f0f2f5; }
-        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h2 { color: #333; text-align: center; margin-top: 0; }
-        textarea { width: 100%; height: 150px; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        /* CSS Custom Properties */
+        :root {
+            /* Colors */
+            --color-primary: #28a745;
+            --color-primary-dark: #20c997;
+            --color-warning: #ffc107;
+            --color-danger: #dc3545;
+            --color-text: #333;
+            --color-text-secondary: #555;
+            --color-text-muted: #666;
+            --color-background: #f0f2f5;
+            --color-surface: white;
+            --color-border: #ddd;
+            --color-disabled: #ccc;
+            --color-status: #007bff;
+            
+            /* Spacing */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 12px;
+            --spacing-lg: 16px;
+            --spacing-xl: 20px;
+            --spacing-xxl: 25px;
+            
+            /* Border Radius */
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+            --radius-xl: 12px;
+            
+            /* Touch Target */
+            --touch-target-min: 48px;
+            
+            /* Font Sizes */
+            --font-size-xs: 12px;
+            --font-size-sm: 14px;
+            --font-size-md: 16px;
+            --font-size-lg: 18px;
+            
+            /* Safe Area Insets - with fallbacks for browsers without env() support */
+            --safe-area-inset-top: 0px;
+            --safe-area-inset-bottom: 0px;
+            --safe-area-inset-left: 0px;
+            --safe-area-inset-right: 0px;
+        }
+        
+        /* Override with actual safe area values when supported */
+        @supports (padding-top: env(safe-area-inset-top)) {
+            :root {
+                --safe-area-inset-top: env(safe-area-inset-top, 0px);
+                --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+                --safe-area-inset-left: env(safe-area-inset-left, 0px);
+                --safe-area-inset-right: env(safe-area-inset-right, 0px);
+            }
+        }
+        
+        body { 
+            font-family: "Microsoft JhengHei", sans-serif; 
+            padding: var(--spacing-xl); 
+            padding-bottom: calc(var(--spacing-xl) + var(--safe-area-inset-bottom));
+            line-height: 1.6; 
+            max-width: 500px; 
+            margin: auto; 
+            background-color: var(--color-background); 
+        }
+        .container { 
+            background: var(--color-surface); 
+            padding: var(--spacing-xxl); 
+            padding-top: calc(var(--spacing-xxl) + var(--safe-area-inset-top));
+            border-radius: var(--radius-xl); 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+        }
+        h2 { color: var(--color-text); text-align: center; margin-top: 0; }
+        textarea { width: 100%; min-height: 100px; height: auto; margin-bottom: 15px; padding: var(--spacing-md); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-sizing: border-box; font-size: var(--font-size-md); resize: none; overflow-y: auto; transition: height 0.2s ease; }
         .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         .controls > div { display: flex; flex-direction: column; }
         .number-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         .number-controls.three-cols { grid-template-columns: 1fr 1fr 1fr; }
-        label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 5px; color: #555; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        label { display: block; font-size: var(--font-size-sm); font-weight: bold; margin-bottom: 5px; color: var(--color-text-secondary); }
+        input, select { width: 100%; padding: 10px; border: 1px solid var(--color-border); border-radius: var(--radius-md); box-sizing: border-box; font-size: var(--font-size-md); min-height: var(--touch-target-min); }
         .btn-group { display: flex; gap: 10px; margin-top: 10px; }
-        button { flex: 1; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; }
-        #startBtn { background: #28a745; color: white; }
-        #pauseBtn { background: #ffc107; color: #333; }
-        #stopBtn { background: #dc3545; color: white; }
-        button:disabled { background: #ccc !important; cursor: not-allowed; }
-        .status { text-align: center; margin-top: 15px; font-size: 14px; color: #007bff; min-height: 20px; font-weight: bold; }
+        button { flex: 1; padding: var(--spacing-md); border: none; border-radius: var(--radius-md); cursor: pointer; font-size: var(--font-size-md); font-weight: bold; min-height: var(--touch-target-min); }
+        #startBtn { background: var(--color-primary); color: white; }
+        #pauseBtn { background: var(--color-warning); color: var(--color-text); }
+        #stopBtn { background: var(--color-danger); color: white; }
+        button:disabled { background: var(--color-disabled) !important; cursor: not-allowed; }
+        .status { 
+            text-align: center; 
+            margin-top: 15px; 
+            font-size: var(--font-size-md); /* Minimum 16px for mobile readability */
+            color: #0056b3; /* Darker blue for better contrast (WCAG AA compliant) */
+            min-height: 24px; 
+            font-weight: bold;
+            padding: var(--spacing-sm);
+            border-radius: var(--radius-sm);
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        
+        /* Paused state styling */
+        .status.paused {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffc107;
+        }
+        
+        /* Reading state styling */
+        .status.reading {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        /* Waiting/countdown state styling */
+        .status.waiting {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
         .mode-toggle { display: flex; gap: 10px; margin-bottom: 15px; }
         .mode-toggle label { display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: normal; }
         .mode-toggle input[type="radio"] { width: auto; }
         .hidden { display: none !important; }
+        
+        /* Mode Tabs Styles */
+        .mode-tabs, .lang-tabs {
+            display: flex;
+            background: #f0f0f0;
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xs);
+            margin-bottom: 15px;
+        }
+        
+        .mode-tab, .lang-tab {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            border-radius: 10px;
+            font-weight: 600;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: var(--touch-target-min);
+            font-size: var(--font-size-md);
+            color: var(--color-text-secondary);
+        }
+        
+        .mode-tab:hover, .lang-tab:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        .mode-tab:focus, .lang-tab:focus {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+        
+        .mode-tab.active, .lang-tab.active {
+            background: var(--color-surface);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            color: var(--color-text);
+        }
+        
+        /* Section label for tabs */
+        .section-label {
+            display: block;
+            font-size: var(--font-size-sm);
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--color-text-secondary);
+        }
+        
+        /* Voice control single column */
+        .voice-control {
+            grid-template-columns: 1fr;
+        }
         /* 螢幕閱讀器專用隱藏 */
         legend.hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
         
+        /* Fixed Bottom Player Controls */
+        .player-controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--color-surface);
+            padding: var(--spacing-md) var(--spacing-lg);
+            padding-bottom: calc(var(--spacing-md) + var(--safe-area-inset-bottom));
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: flex;
+            gap: var(--spacing-md); /* 12px gap for better touch separation */
+        }
+        
+        .player-controls button {
+            flex: 1;
+        }
+        
+        /* Main content area - add padding to prevent overlap with fixed controls */
+        .main-content {
+            padding-bottom: calc(120px + var(--safe-area-inset-bottom)); /* Space for fixed player controls + safe area */
+        }
+        
+        /* Progress Section Styles */
+        .progress-section {
+            margin-top: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: var(--radius-lg);
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-primary-dark));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .current-word {
+            font-size: var(--font-size-md);
+            font-weight: 600;
+            color: var(--color-text);
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .progress-count {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-muted);
+            margin-left: var(--spacing-sm);
+            white-space: nowrap;
+        }
+        
+        /* Settings Panel Styles */
+        .settings-panel {
+            background: #f8f9fa;
+            border-radius: var(--radius-lg);
+            margin-bottom: 15px;
+        }
+        
+        .settings-panel summary {
+            padding: var(--spacing-md) var(--spacing-lg);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            list-style: none;
+            min-height: var(--touch-target-min);
+        }
+        
+        .settings-panel summary::-webkit-details-marker {
+            display: none;
+        }
+        
+        .settings-panel summary::marker {
+            display: none;
+        }
+        
+        .settings-title {
+            font-weight: 600;
+            color: var(--color-text);
+            font-size: var(--font-size-md);
+        }
+        
+        .settings-preview {
+            font-size: var(--font-size-xs);
+            color: var(--color-text-muted);
+            text-align: right;
+            flex-shrink: 0;
+        }
+        
+        .settings-right {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .settings-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-text-muted);
+            transition: transform 0.2s ease;
+        }
+        
+        .settings-arrow svg {
+            width: 18px;
+            height: 18px;
+        }
+        
+        /* Collapsed state: rotate arrow down */
+        .settings-panel:not([open]) .settings-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .settings-panel[open] .settings-preview {
+            display: none;
+        }
+        
+        .settings-content {
+            padding: 0 var(--spacing-lg) var(--spacing-lg);
+        }
+        
+        .settings-panel .number-controls {
+            margin-bottom: 0;
+        }
+        
+        /* Segmented Control Styles (for speed selection) */
+        .segmented-control {
+            display: flex;
+            background: #e9ecef;
+            border-radius: var(--radius-lg);
+            padding: 3px;
+            gap: 2px;
+        }
+        
+        .segmented-control .segment {
+            flex: 1;
+            padding: 10px 4px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 40px;
+            white-space: nowrap;
+        }
+        
+        .segmented-control .segment:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        .segmented-control .segment.active {
+            background: var(--color-surface);
+            color: var(--color-primary);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-weight: 600;
+        }
+        
+        .segmented-control .segment:focus {
+            outline: 2px solid var(--color-primary);
+            outline-offset: -2px;
+        }
+        
+        /* Stepper Styles (for repeat count) */
+        .stepper-control {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            width: 100%;
+        }
+        
+        .stepper-control .stepper-btn {
+            width: 80px;
+            height: 48px;
+            border: none;
+            background: none !important;
+            background-color: transparent !important;
+            color: var(--color-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.15s ease;
+            -webkit-appearance: none;
+            appearance: none;
+            padding: 0;
+            min-height: var(--touch-target-min);
+        }
+        
+        .stepper-control .stepper-btn svg {
+            width: 32px;
+            height: 32px;
+            fill: currentColor;
+        }
+        
+        .stepper-control .stepper-btn:hover:not(:disabled) {
+            color: var(--color-primary-dark);
+        }
+        
+        .stepper-control .stepper-btn:active:not(:disabled) {
+            opacity: 0.7;
+        }
+        
+        .stepper-control .stepper-btn:disabled {
+            color: #ccc;
+            cursor: not-allowed;
+            background: none !important;
+            background-color: transparent !important;
+        }
+        
+        .stepper-control .stepper-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        
+        .stepper-control .stepper-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--color-text);
+            min-width: 32px;
+            text-align: center;
+        }
+        
+        .stepper-control .stepper-unit {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-muted);
+        }
+        
+        /* Slider Styles (for interval seconds) */
+        .slider-label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .slider-label-row label {
+            margin-bottom: 0;
+        }
+        
+        .slider-value-display {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--color-primary);
+            background: #e8f5e9;
+            padding: 4px 10px;
+            border-radius: var(--radius-md);
+        }
+        
+        .slider-control {
+            padding: 4px 0;
+        }
+        
+        .slider-control input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            outline: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .slider-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            background: var(--color-primary);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(40, 167, 69, 0.4);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        
+        .slider-control input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+        
+        .slider-control input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(0.95);
+        }
+        
+        .slider-control input[type="range"]::-moz-range-thumb {
+            width: 28px;
+            height: 28px;
+            background: var(--color-primary);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(40, 167, 69, 0.4);
+        }
+        
+        .slider-control .slider-ticks {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 2px 0;
+        }
+        
+        .slider-control .slider-tick {
+            font-size: 10px;
+            color: var(--color-text-muted);
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Settings control group layout */
+        .settings-control-group {
+            margin-bottom: 20px;
+        }
+        
+        .settings-control-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .settings-control-group > label {
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        /* Word Counter Styles */
+        .word-counter {
+            display: flex;
+            justify-content: space-between;
+            font-size: var(--font-size-xs);
+            color: var(--color-text-muted);
+            margin-top: var(--spacing-sm);
+            margin-bottom: 15px;
+            padding: 0 var(--spacing-xs);
+        }
+        
+        .word-counter .count {
+            color: var(--color-text-secondary);
+        }
+        
+        .word-counter .language-tag {
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+            font-size: var(--font-size-xs);
+        }
+        
         /* 移動裝置優化 */
         @media (max-width: 520px) {
-            body { padding: 10px; }
+            body { 
+                padding: 10px; 
+                padding-top: calc(10px + var(--safe-area-inset-top));
+                padding-bottom: calc(10px + var(--safe-area-inset-bottom));
+                padding-left: calc(10px + var(--safe-area-inset-left));
+                padding-right: calc(10px + var(--safe-area-inset-right));
+            }
             .container { padding: 15px; }
+            
+            /* Single-column layout for all controls on mobile (Requirement 10.1) */
             .controls { grid-template-columns: 1fr; }
+            .number-controls { grid-template-columns: 1fr; }
             .number-controls.three-cols { grid-template-columns: 1fr; }
-            button { padding: 14px; font-size: 16px; min-height: 48px; }
-            input, select { min-height: 44px; font-size: 16px; }
-            textarea { font-size: 16px; }
+            
+            /* Touch targets and font sizes (Requirements 10.2, 10.3) */
+            button { padding: 14px; font-size: var(--font-size-md); min-height: var(--touch-target-min); }
+            input, select { min-height: var(--touch-target-min); font-size: var(--font-size-md); padding: 12px; }
+            textarea { font-size: var(--font-size-md); max-height: 300px; min-height: var(--touch-target-min); }
+            
+            /* Spacing between interactive elements (Requirement 10.4) */
+            .controls > div { margin-bottom: var(--spacing-sm); }
+            .number-controls > div { margin-bottom: var(--spacing-sm); }
+            .settings-content .number-controls > div:last-child { margin-bottom: 0; }
+            
+            /* Adjust main content padding on mobile for fixed controls + safe area */
+            .main-content {
+                padding-bottom: calc(120px + var(--safe-area-inset-bottom));
+            }
+            
+            /* Hide debug section on mobile by default */
+            .debug-section {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>默書神器</h2>
-    
-    <div class="controls">
-        <div>
-            <label for="langSelect">選擇語言：</label>
-            <select id="langSelect" aria-describedby="langDesc">
-                <option value="zh-HK">粵語</option>
-                <option value="zh-CN">普通話</option>
-                <option value="en-GB">英語</option>
-            </select>
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <h2>默書神器</h2>
+        
+        <!-- Language Tabs -->
+        <label class="section-label">選擇語言：</label>
+        <div class="lang-tabs" role="tablist" aria-label="選擇語言">
+            <button class="lang-tab active" role="tab" data-lang="zh-HK" aria-selected="true" tabindex="0">
+                粵語
+            </button>
+            <button class="lang-tab" role="tab" data-lang="zh-CN" aria-selected="false" tabindex="-1">
+                普通話
+            </button>
+            <button class="lang-tab" role="tab" data-lang="en-GB" aria-selected="false" tabindex="-1">
+                英語
+            </button>
         </div>
-        <div>
-            <label for="voiceSelect">選擇聲音：</label>
-            <select id="voiceSelect">
-                <option value="auto">自動</option>
-            </select>
+        <!-- Hidden select for form compatibility -->
+        <select id="langSelect" class="hidden" aria-describedby="langDesc">
+            <option value="zh-HK" selected>粵語</option>
+            <option value="zh-CN">普通話</option>
+            <option value="en-GB">英語</option>
+        </select>
+
+        <div class="controls voice-control">
+            <div>
+                <label for="voiceSelect">選擇聲音：</label>
+                <select id="voiceSelect">
+                    <option value="auto">自動</option>
+                </select>
+            </div>
         </div>
+
+        <!-- Mode Tabs -->
+        <div class="mode-tabs" role="tablist" aria-label="選擇模式">
+            <button class="mode-tab active" role="tab" data-mode="word" aria-selected="true" tabindex="0">
+                讀詞語
+            </button>
+            <button class="mode-tab" role="tab" data-mode="article" aria-selected="false" tabindex="-1">
+                讀文章
+            </button>
+        </div>
+        <!-- Hidden radio buttons for form compatibility -->
+        <input type="radio" name="mode" value="word" checked class="hidden" id="modeWord">
+        <input type="radio" name="mode" value="article" class="hidden" id="modeArticle">
+
+        <label id="inputLabel" for="words">輸入詞語（每行一個）：</label>
+        <textarea id="words" placeholder="蘋果&#10;香蕉" aria-labelledby="inputLabel"></textarea>
+
+        <!-- Word Counter -->
+        <div class="word-counter" id="wordCounter">
+            <span class="count" id="wordCount">0 個詞語</span>
+            <span class="language-tag" id="languageTag">粵語</span>
+        </div>
+
+        <!-- Collapsible Settings Panel -->
+        <details class="settings-panel" id="settingsPanel" open>
+            <summary>
+                <span class="settings-title">⚙️ 朗讀設定</span>
+                <span class="settings-right">
+                    <span class="settings-preview" id="settingsPreview">正常速度 · 3次 · 5秒間隔</span>
+                    <span class="settings-arrow">
+                        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z" fill="currentColor"/></svg>
+                    </span>
+                </span>
+            </summary>
+            <div class="settings-content">
+                <!-- Word Mode Controls -->
+                <div id="wordControls">
+                    <!-- Speed: Segmented Control -->
+                    <div class="settings-control-group">
+                        <label>朗讀速度：</label>
+                        <div class="segmented-control" id="wordSpeedSegments" role="radiogroup" aria-label="朗讀速度">
+                            <button class="segment" data-value="0.5" role="radio" aria-checked="false">很慢</button>
+                            <button class="segment" data-value="0.7" role="radio" aria-checked="false">慢</button>
+                            <button class="segment active" data-value="0.9" role="radio" aria-checked="true">正常</button>
+                            <button class="segment" data-value="1.1" role="radio" aria-checked="false">快</button>
+                            <button class="segment" data-value="1.3" role="radio" aria-checked="false">很快</button>
+                        </div>
+                        <input type="hidden" id="wordSpeechRate" value="0.9">
+                    </div>
+                    
+                    <!-- Repeat Count: Stepper -->
+                    <div class="settings-control-group">
+                        <label>詞語重複次數：</label>
+                        <div class="stepper-control" id="repeatCountStepper">
+                            <button class="stepper-btn" data-action="decrease" aria-label="減少次數">
+                                <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                            </button>
+                            <div class="stepper-center">
+                                <span class="stepper-value" id="repeatCountValue">3</span>
+                                <span class="stepper-unit">次</span>
+                            </div>
+                            <button class="stepper-btn" data-action="increase" aria-label="增加次數">
+                                <svg viewBox="0 0 24 24"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>
+                            </button>
+                        </div>
+                        <input type="hidden" id="repeatCount" value="3">
+                    </div>
+                    
+                    <!-- Interval: Slider -->
+                    <div class="settings-control-group">
+                        <div class="slider-label-row">
+                            <label>每詞相隔秒數：</label>
+                            <span class="slider-value-display" id="intervalDisplay">5 秒</span>
+                        </div>
+                        <div class="slider-control">
+                            <input type="range" id="intervalSlider" min="0" max="10" value="5" aria-label="每詞相隔秒數">
+                            <div class="slider-ticks">
+                                <span class="slider-tick">0</span>
+                                <span class="slider-tick">5</span>
+                                <span class="slider-tick">10</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="interval" value="5">
+                    </div>
+                </div>
+
+                <!-- Article Mode Controls -->
+                <div id="articleControls" class="hidden">
+                    <!-- Speed: Segmented Control -->
+                    <div class="settings-control-group">
+                        <label>朗讀速度：</label>
+                        <div class="segmented-control" id="articleSpeedSegments" role="radiogroup" aria-label="朗讀速度">
+                            <button class="segment" data-value="0.5" role="radio" aria-checked="false">很慢</button>
+                            <button class="segment" data-value="0.7" role="radio" aria-checked="false">慢</button>
+                            <button class="segment active" data-value="0.9" role="radio" aria-checked="true">正常</button>
+                            <button class="segment" data-value="1.1" role="radio" aria-checked="false">快</button>
+                            <button class="segment" data-value="1.3" role="radio" aria-checked="false">很快</button>
+                        </div>
+                        <input type="hidden" id="speechRate" value="0.9">
+                    </div>
+                    
+                    <!-- Sentence Repeat: Stepper -->
+                    <div class="settings-control-group">
+                        <label>句子重複次數：</label>
+                        <div class="stepper-control" id="sentenceRepeatStepper">
+                            <button class="stepper-btn" data-action="decrease" aria-label="減少次數">
+                                <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                            </button>
+                            <div class="stepper-center">
+                                <span class="stepper-value" id="sentenceRepeatValue">2</span>
+                                <span class="stepper-unit">次</span>
+                            </div>
+                            <button class="stepper-btn" data-action="increase" aria-label="增加次數">
+                                <svg viewBox="0 0 24 24"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>
+                            </button>
+                        </div>
+                        <input type="hidden" id="sentenceRepeat" value="2">
+                    </div>
+                    
+                    <!-- Char Wait Time: Slider -->
+                    <div class="settings-control-group">
+                    <!-- Char Wait Time: Slider -->
+                    <div class="settings-control-group">
+                        <div class="slider-label-row">
+                            <label>每字等待秒數：</label>
+                            <span class="slider-value-display" id="charWaitTimeDisplay">3 秒</span>
+                        </div>
+                        <div class="slider-control">
+                            <input type="range" id="charWaitTimeSlider" min="0" max="10" value="3" aria-label="每字等待秒數">
+                            <div class="slider-ticks">
+                                <span class="slider-tick">0</span>
+                                <span class="slider-tick">5</span>
+                                <span class="slider-tick">10</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="charWaitTime" value="3">
+                    </div>
+                </div>
+            </div>
+        </details>
+
+        <!-- Progress Section -->
+        <div class="progress-section" id="progressSection">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text">
+                <span class="current-word" id="currentWord">準備開始...</span>
+                <span class="progress-count" id="progressCount"></span>
+            </div>
+        </div>
+
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+        
+        <details id="debugSection" class="debug-section" style="margin-top: 15px; font-size: 12px;">
+            <summary style="cursor: pointer; color: #666;">調試：查看可用語音</summary>
+            <div id="voiceDebug" style="margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 6px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; font-family: monospace;"></div>
+            <div style="margin-top: 5px; display: flex; gap: 5px;">
+                <button onclick="showVoiceDebug()" style="padding: 5px 10px; font-size: 12px;">刷新語音列表</button>
+                <button onclick="testVoice()" style="padding: 5px 10px; font-size: 12px; background: #007bff; color: white; border: none; border-radius: 4px;">測試語音</button>
+            </div>
+        </details>
     </div>
+</div>
 
-    <fieldset class="mode-toggle" style="border:none; padding:0; margin:0 0 15px 0;">
-        <legend class="hidden">選擇模式</legend>
-        <label><input type="radio" name="mode" value="word" checked onchange="toggleMode()"> 讀詞語</label>
-        <label><input type="radio" name="mode" value="article" onchange="toggleMode()"> 讀文章</label>
-    </fieldset>
-
-    <label id="inputLabel" for="words">輸入詞語（每行一個）：</label>
-    <textarea id="words" placeholder="蘋果&#10;香蕉" aria-labelledby="inputLabel"></textarea>
-
-    <div id="wordControls" class="number-controls three-cols">
-        <div>
-            <label for="wordSpeechRate">朗讀速度：</label>
-            <select id="wordSpeechRate">
-                <option value="0.5">很慢</option>
-                <option value="0.7">慢</option>
-                <option value="0.9" selected>正常</option>
-                <option value="1.1">快</option>
-                <option value="1.3">很快</option>
-            </select>
-        </div>
-        <div>
-            <label for="repeatCount">每行朗讀次數：</label>
-            <select id="repeatCount">
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3" selected>3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-            </select>
-        </div>
-        <div>
-            <label for="interval">每詞相隔秒數：</label>
-            <select id="interval">
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5" selected>5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-                <option value="9">9</option>
-                <option value="10">10</option>
-            </select>
-        </div>
-    </div>
-
-    <div id="articleControls" class="number-controls three-cols hidden">
-        <div>
-            <label for="speechRate">朗讀速度：</label>
-            <select id="speechRate">
-                <option value="0.5">很慢</option>
-                <option value="0.7">慢</option>
-                <option value="0.9" selected>正常</option>
-                <option value="1.1">快</option>
-                <option value="1.3">很快</option>
-            </select>
-        </div>
-        <div>
-            <label for="sentenceRepeat">朗讀句子次數：</label>
-            <select id="sentenceRepeat">
-                <option value="1">1</option>
-                <option value="2" selected>2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-            </select>
-        </div>
-        <div>
-            <label for="charWaitTime">每字等待秒數：</label>
-            <select id="charWaitTime">
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3" selected>3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-                <option value="9">9</option>
-                <option value="10">10</option>
-            </select>
-        </div>
-    </div>
-
-    <div class="btn-group" role="group" aria-label="播放控制">
-        <button id="startBtn" onclick="startReading()" aria-label="開始朗讀">開始</button>
-        <button id="pauseBtn" onclick="togglePause()" disabled aria-label="暫停朗讀">暫停</button>
-        <button id="stopBtn" onclick="stopReading()" disabled aria-label="取消朗讀">取消</button>
-    </div>
-
-    <div id="status" class="status" role="status" aria-live="polite"></div>
-    
-    <details style="margin-top: 15px; font-size: 12px;">
-        <summary style="cursor: pointer; color: #666;">調試：查看可用語音</summary>
-        <div id="voiceDebug" style="margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 6px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; font-family: monospace;"></div>
-        <div style="margin-top: 5px; display: flex; gap: 5px;">
-            <button onclick="showVoiceDebug()" style="padding: 5px 10px; font-size: 12px;">刷新語音列表</button>
-            <button onclick="testVoice()" style="padding: 5px 10px; font-size: 12px; background: #007bff; color: white; border: none; border-radius: 4px;">測試語音</button>
-        </div>
-    </details>
+<!-- Fixed Bottom Player Controls -->
+<div class="player-controls" role="group" aria-label="播放控制">
+    <button id="startBtn" onclick="startReading()" aria-label="開始朗讀">開始</button>
+    <button id="pauseBtn" onclick="togglePause()" disabled aria-label="暫停朗讀">暫停</button>
+    <button id="stopBtn" onclick="stopReading()" disabled aria-label="取消朗讀">取消</button>
 </div>
 
 <script>
@@ -182,8 +810,482 @@
     let wasInterrupted = false;  // 標記是否在朗讀中被中斷
     let skipNextWait = false;    // 標記是否跳過下一次等待
 
+    // Progress state
+    let progressState = {
+        currentIndex: 0,
+        totalItems: 0,
+        currentItem: ''
+    };
+
+    // Update progress bar and text
+    function updateProgress(current, total) {
+        if (total <= 0) {
+            console.warn('Invalid total items count');
+            return;
+        }
+        const safeIndex = Math.max(0, Math.min(current, total));
+        const percentage = (safeIndex / total) * 100;
+        
+        const progressFill = document.getElementById('progressFill');
+        const progressCount = document.getElementById('progressCount');
+        
+        if (progressFill) {
+            progressFill.style.width = percentage + '%';
+        }
+        if (progressCount) {
+            progressCount.textContent = safeIndex + ' / ' + total;
+        }
+        
+        progressState.currentIndex = safeIndex;
+        progressState.totalItems = total;
+    }
+
+    // Update current word display
+    function updateCurrentWord(word) {
+        const currentWordEl = document.getElementById('currentWord');
+        if (currentWordEl) {
+            currentWordEl.textContent = word || '準備開始...';
+        }
+        progressState.currentItem = word || '';
+    }
+
+    // Reset progress to initial state
+    function resetProgress() {
+        updateProgress(0, 0);
+        updateCurrentWord('準備開始...');
+        const progressFill = document.getElementById('progressFill');
+        if (progressFill) {
+            progressFill.style.width = '0%';
+        }
+        const progressCount = document.getElementById('progressCount');
+        if (progressCount) {
+            progressCount.textContent = '';
+        }
+    }
+
+    // Word/Character Counter Functions
+    
+    /**
+     * Auto-expand textarea to fit content
+     * @param {HTMLTextAreaElement} textarea - The textarea element to auto-expand
+     * @param {number} minHeight - Minimum height in pixels (default: 100)
+     * @param {number} maxHeight - Maximum height in pixels (default: 300)
+     */
+    function autoExpandTextarea(textarea, minHeight = 100, maxHeight = 300) {
+        if (!textarea) return;
+        
+        // Reset height to auto to get accurate scrollHeight
+        textarea.style.height = 'auto';
+        
+        // Calculate new height clamped between min and max
+        const scrollHeight = textarea.scrollHeight;
+        const newHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
+        
+        textarea.style.height = newHeight + 'px';
+    }
+
+    /**
+     * Count words (non-empty lines) for word mode
+     * @param {string} text - Input text
+     * @returns {number} Number of non-empty lines
+     */
+    function countWords(text) {
+        if (!text || typeof text !== 'string') {
+            return 0;
+        }
+        const lines = text.split('\n').filter(line => line.trim() !== '');
+        return lines.length;
+    }
+
+    /**
+     * Count Chinese characters for article mode
+     * @param {string} text - Input text
+     * @returns {number} Number of Chinese characters (Unicode range \u4e00-\u9fff)
+     */
+    function countCharacters(text) {
+        if (!text || typeof text !== 'string') {
+            return 0;
+        }
+        const chineseChars = text.match(/[\u4e00-\u9fff]/g);
+        return chineseChars ? chineseChars.length : 0;
+    }
+
+    /**
+     * Get the language label for display
+     * @param {string} langCode - Language code (e.g., 'zh-HK', 'zh-CN', 'en-GB')
+     * @returns {string} Language label in Chinese
+     */
+    function getLanguageLabel(langCode) {
+        const labels = {
+            'zh-HK': '粵語',
+            'zh-CN': '普通話',
+            'en-GB': '英語'
+        };
+        return labels[langCode] || langCode;
+    }
+
+    /**
+     * Update the word counter display
+     */
+    function updateWordCounter() {
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        const text = document.getElementById('words').value;
+        const lang = document.getElementById('langSelect').value;
+        
+        const countEl = document.getElementById('wordCount');
+        const langTagEl = document.getElementById('languageTag');
+        
+        if (!countEl || !langTagEl) return;
+        
+        let count, unit;
+        if (mode === 'word') {
+            count = countWords(text);
+            unit = '個詞語';
+        } else {
+            count = countCharacters(text);
+            unit = '個字';
+        }
+        
+        countEl.textContent = count + ' ' + unit;
+        langTagEl.textContent = getLanguageLabel(lang);
+    }
+
+    // Speed value to label mapping
+    const speedLabels = {
+        '0.5': '很慢',
+        '0.7': '慢',
+        '0.9': '正常',
+        '1.1': '快',
+        '1.3': '很快'
+    };
+
+    // ========== New Control Helper Functions ==========
+    
+    /**
+     * Update segmented control UI to reflect the selected value
+     * @param {string} containerId - ID of the segmented control container
+     * @param {string} value - The value to select
+     */
+    function updateSegmentedControl(containerId, value) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        container.querySelectorAll('.segment').forEach(segment => {
+            const isActive = segment.getAttribute('data-value') === value;
+            segment.classList.toggle('active', isActive);
+            segment.setAttribute('aria-checked', isActive ? 'true' : 'false');
+        });
+    }
+    
+    /**
+     * Update stepper display value
+     * @param {string} displayId - ID of the stepper value display element
+     * @param {string|number} value - The value to display
+     */
+    function updateStepperDisplay(displayId, value) {
+        const display = document.getElementById(displayId);
+        if (display) {
+            display.textContent = value;
+        }
+    }
+    
+    /**
+     * Update stepper button disabled states
+     * @param {string} containerId - ID of the stepper container
+     * @param {number} value - Current value
+     * @param {number} min - Minimum value
+     * @param {number} max - Maximum value
+     */
+    function updateStepperButtons(containerId, value, min, max) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        container.querySelectorAll('.stepper-btn').forEach(btn => {
+            const action = btn.getAttribute('data-action');
+            if (action === 'decrease') {
+                btn.disabled = value <= min;
+            } else if (action === 'increase') {
+                btn.disabled = value >= max;
+            }
+        });
+    }
+    
+    /**
+     * Update slider and its display
+     * @param {string} sliderId - ID of the slider input
+     * @param {string} displayId - ID of the value display element
+     * @param {string|number} value - The value to set
+     */
+    function updateSliderDisplay(sliderId, displayId, value) {
+        const slider = document.getElementById(sliderId);
+        const display = document.getElementById(displayId);
+        
+        if (slider) {
+            slider.value = value;
+        }
+        if (display) {
+            display.textContent = value + ' 秒';
+        }
+    }
+    
+    /**
+     * Initialize segmented control event listeners
+     * @param {string} containerId - ID of the segmented control container
+     * @param {string} hiddenInputId - ID of the hidden input to sync value
+     * @param {Function} onChange - Callback when value changes
+     */
+    function initSegmentedControl(containerId, hiddenInputId, onChange) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        container.querySelectorAll('.segment').forEach(segment => {
+            segment.addEventListener('click', () => {
+                const value = segment.getAttribute('data-value');
+                
+                // Update UI
+                container.querySelectorAll('.segment').forEach(s => {
+                    s.classList.remove('active');
+                    s.setAttribute('aria-checked', 'false');
+                });
+                segment.classList.add('active');
+                segment.setAttribute('aria-checked', 'true');
+                
+                // Update hidden input
+                const hiddenInput = document.getElementById(hiddenInputId);
+                if (hiddenInput) {
+                    hiddenInput.value = value;
+                }
+                
+                // Trigger callback
+                if (onChange) onChange(value);
+            });
+        });
+    }
+    
+    /**
+     * Initialize stepper control event listeners
+     * @param {string} containerId - ID of the stepper container
+     * @param {string} hiddenInputId - ID of the hidden input to sync value
+     * @param {string} displayId - ID of the value display element
+     * @param {number} min - Minimum value
+     * @param {number} max - Maximum value
+     * @param {Function} onChange - Callback when value changes
+     */
+    function initStepperControl(containerId, hiddenInputId, displayId, min, max, onChange) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        const hiddenInput = document.getElementById(hiddenInputId);
+        const display = document.getElementById(displayId);
+        const buttons = container.querySelectorAll('.stepper-btn');
+        
+        function updateValue(delta) {
+            let currentValue = parseInt(hiddenInput.value) || min;
+            let newValue = Math.max(min, Math.min(max, currentValue + delta));
+            
+            hiddenInput.value = newValue;
+            if (display) display.textContent = newValue;
+            
+            // Update button states
+            buttons.forEach(btn => {
+                const action = btn.getAttribute('data-action');
+                if (action === 'decrease') {
+                    btn.disabled = newValue <= min;
+                } else if (action === 'increase') {
+                    btn.disabled = newValue >= max;
+                }
+            });
+            
+            if (onChange) onChange(newValue);
+        }
+        
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const action = btn.getAttribute('data-action');
+                updateValue(action === 'increase' ? 1 : -1);
+            });
+        });
+        
+        // Initialize button states
+        const currentValue = parseInt(hiddenInput.value) || min;
+        buttons.forEach(btn => {
+            const action = btn.getAttribute('data-action');
+            if (action === 'decrease') {
+                btn.disabled = currentValue <= min;
+            } else if (action === 'increase') {
+                btn.disabled = currentValue >= max;
+            }
+        });
+    }
+    
+    /**
+     * Initialize slider control event listeners
+     * @param {string} sliderId - ID of the slider input
+     * @param {string} hiddenInputId - ID of the hidden input to sync value
+     * @param {string} displayId - ID of the value display element
+     * @param {Function} onChange - Callback when value changes
+     */
+    function initSliderControl(sliderId, hiddenInputId, displayId, onChange) {
+        const slider = document.getElementById(sliderId);
+        const hiddenInput = document.getElementById(hiddenInputId);
+        const display = document.getElementById(displayId);
+        
+        if (!slider) return;
+        
+        slider.addEventListener('input', () => {
+            const value = slider.value;
+            
+            if (hiddenInput) hiddenInput.value = value;
+            if (display) display.textContent = value + ' 秒';
+            
+            if (onChange) onChange(value);
+        });
+    }
+    
+    /**
+     * Initialize all new settings controls
+     */
+    function initSettingsControls() {
+        const onSettingChange = () => {
+            updateSettingsPreview();
+            saveSettings();
+        };
+        
+        // Word mode controls
+        initSegmentedControl('wordSpeedSegments', 'wordSpeechRate', onSettingChange);
+        initStepperControl('repeatCountStepper', 'repeatCount', 'repeatCountValue', 1, 10, onSettingChange);
+        initSliderControl('intervalSlider', 'interval', 'intervalDisplay', onSettingChange);
+        
+        // Article mode controls
+        initSegmentedControl('articleSpeedSegments', 'speechRate', onSettingChange);
+        initStepperControl('sentenceRepeatStepper', 'sentenceRepeat', 'sentenceRepeatValue', 1, 10, onSettingChange);
+        initSliderControl('charWaitTimeSlider', 'charWaitTime', 'charWaitTimeDisplay', onSettingChange);
+    }
+
+    // Generate settings preview text based on current settings
+    function generateSettingsPreview(speedValue, repeatCount, interval) {
+        const speedLabel = speedLabels[speedValue] || '正常';
+        return `${speedLabel}速度 · ${repeatCount}次 · ${interval}秒間隔`;
+    }
+
+    // Update settings preview text in the collapsed panel summary
+    function updateSettingsPreview() {
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        const previewEl = document.getElementById('settingsPreview');
+        if (!previewEl) return;
+
+        let speedValue, repeatCount, interval;
+
+        if (mode === 'word') {
+            speedValue = document.getElementById('wordSpeechRate').value;
+            repeatCount = document.getElementById('repeatCount').value;
+            interval = document.getElementById('interval').value;
+        } else {
+            speedValue = document.getElementById('speechRate').value;
+            repeatCount = document.getElementById('sentenceRepeat').value;
+            interval = document.getElementById('charWaitTime').value;
+        }
+
+        previewEl.textContent = generateSettingsPreview(speedValue, repeatCount, interval);
+    }
+
+    // Save settings panel open/closed state
+    function saveSettingsPanelState(isOpen) {
+        try {
+            localStorage.setItem('settingsPanelOpen', JSON.stringify(isOpen));
+        } catch (e) {
+            console.warn('無法保存設定面板狀態:', e);
+        }
+    }
+
+    // Load settings panel open/closed state
+    function loadSettingsPanelState() {
+        try {
+            const saved = localStorage.getItem('settingsPanelOpen');
+            return saved !== null ? JSON.parse(saved) : true; // Default to open
+        } catch (e) {
+            console.warn('無法讀取設定面板狀態:', e);
+            return true; // Default to open
+        }
+    }
+
+    // Debug section visibility functions
+    
+    /**
+     * Save debug section visibility preference to localStorage
+     * @param {boolean} isVisible - Whether the debug section should be visible
+     */
+    function saveDebugVisibility(isVisible) {
+        try {
+            localStorage.setItem('debugSectionVisible', JSON.stringify(isVisible));
+        } catch (e) {
+            console.warn('無法保存調試區域狀態:', e);
+        }
+    }
+
+    /**
+     * Load debug section visibility preference from localStorage
+     * @returns {boolean} Whether the debug section should be visible (default: false on mobile)
+     */
+    function loadDebugVisibility() {
+        try {
+            const saved = localStorage.getItem('debugSectionVisible');
+            return saved !== null ? JSON.parse(saved) : false; // Default to hidden
+        } catch (e) {
+            console.warn('無法讀取調試區域狀態:', e);
+            return false; // Default to hidden
+        }
+    }
+
+    /**
+     * Toggle debug section visibility
+     */
+    function toggleDebugVisibility() {
+        const debugSection = document.getElementById('debugSection');
+        if (!debugSection) return;
+        
+        const isCurrentlyVisible = debugSection.style.display !== 'none';
+        const newVisibility = !isCurrentlyVisible;
+        
+        debugSection.style.display = newVisibility ? 'block' : 'none';
+        saveDebugVisibility(newVisibility);
+        saveSettings(); // Also save to unified settings
+    }
+
+    /**
+     * Initialize debug section visibility based on saved preference
+     */
+    function initDebugSection() {
+        const debugSection = document.getElementById('debugSection');
+        if (!debugSection) return;
+        
+        const isVisible = loadDebugVisibility();
+        debugSection.style.display = isVisible ? 'block' : 'none';
+    }
+
+    // Initialize settings panel state and event listener
+    function initSettingsPanel() {
+        const panel = document.getElementById('settingsPanel');
+        if (!panel) return;
+
+        // Restore saved state (handled by loadSettings now for unified storage)
+        // Only set default if not already loaded
+        if (!localStorage.getItem('dictationSettings')) {
+            panel.open = true; // Default to open
+        }
+
+        // Listen for toggle events and save to unified settings
+        panel.addEventListener('toggle', () => {
+            saveSettingsPanelState(panel.open);
+            saveSettings(); // Also save to unified settings
+        });
+    }
+
     // 保存設定到 localStorage
     function saveSettings() {
+        const settingsPanel = document.getElementById('settingsPanel');
+        const debugSection = document.getElementById('debugSection');
+        
         const settings = {
             lang: document.getElementById('langSelect').value,
             voice: document.getElementById('voiceSelect').value,
@@ -193,7 +1295,10 @@
             interval: document.getElementById('interval').value,
             speechRate: document.getElementById('speechRate').value,
             sentenceRepeat: document.getElementById('sentenceRepeat').value,
-            charWaitTime: document.getElementById('charWaitTime').value
+            charWaitTime: document.getElementById('charWaitTime').value,
+            // New settings for panel state and debug visibility (Requirements 4.6, 8.4)
+            settingsPanelOpen: settingsPanel ? settingsPanel.open : true,
+            debugVisible: debugSection ? (debugSection.style.display !== 'none') : false
         };
         localStorage.setItem('dictationSettings', JSON.stringify(settings));
     }
@@ -205,17 +1310,72 @@
         
         try {
             const settings = JSON.parse(saved);
-            if (settings.lang) document.getElementById('langSelect').value = settings.lang;
+            if (settings.lang) {
+                document.getElementById('langSelect').value = settings.lang;
+                // Update language tabs
+                const langTabs = document.querySelectorAll('.lang-tab');
+                langTabs.forEach(tab => {
+                    if (tab.getAttribute('data-lang') === settings.lang) {
+                        tab.classList.add('active');
+                        tab.setAttribute('aria-selected', 'true');
+                        tab.setAttribute('tabindex', '0');
+                    } else {
+                        tab.classList.remove('active');
+                        tab.setAttribute('aria-selected', 'false');
+                        tab.setAttribute('tabindex', '-1');
+                    }
+                });
+            }
             if (settings.mode) {
-                document.querySelector(`input[name="mode"][value="${settings.mode}"]`).checked = true;
+                // Update hidden radio button
+                const modeRadio = document.getElementById('mode' + settings.mode.charAt(0).toUpperCase() + settings.mode.slice(1));
+                if (modeRadio) {
+                    modeRadio.checked = true;
+                }
                 toggleMode();
             }
-            if (settings.wordSpeechRate) document.getElementById('wordSpeechRate').value = settings.wordSpeechRate;
-            if (settings.repeatCount) document.getElementById('repeatCount').value = settings.repeatCount;
-            if (settings.interval) document.getElementById('interval').value = settings.interval;
-            if (settings.speechRate) document.getElementById('speechRate').value = settings.speechRate;
-            if (settings.sentenceRepeat) document.getElementById('sentenceRepeat').value = settings.sentenceRepeat;
-            if (settings.charWaitTime) document.getElementById('charWaitTime').value = settings.charWaitTime;
+            if (settings.wordSpeechRate) {
+                document.getElementById('wordSpeechRate').value = settings.wordSpeechRate;
+                updateSegmentedControl('wordSpeedSegments', settings.wordSpeechRate);
+            }
+            if (settings.repeatCount) {
+                document.getElementById('repeatCount').value = settings.repeatCount;
+                updateStepperDisplay('repeatCountValue', settings.repeatCount);
+                updateStepperButtons('repeatCountStepper', parseInt(settings.repeatCount), 1, 10);
+            }
+            if (settings.interval) {
+                document.getElementById('interval').value = settings.interval;
+                updateSliderDisplay('intervalSlider', 'intervalDisplay', settings.interval);
+            }
+            if (settings.speechRate) {
+                document.getElementById('speechRate').value = settings.speechRate;
+                updateSegmentedControl('articleSpeedSegments', settings.speechRate);
+            }
+            if (settings.sentenceRepeat) {
+                document.getElementById('sentenceRepeat').value = settings.sentenceRepeat;
+                updateStepperDisplay('sentenceRepeatValue', settings.sentenceRepeat);
+                updateStepperButtons('sentenceRepeatStepper', parseInt(settings.sentenceRepeat), 1, 10);
+            }
+            if (settings.charWaitTime) {
+                document.getElementById('charWaitTime').value = settings.charWaitTime;
+                updateSliderDisplay('charWaitTimeSlider', 'charWaitTimeDisplay', settings.charWaitTime);
+            }
+            
+            // Load settings panel state (Requirement 4.6)
+            if (settings.settingsPanelOpen !== undefined) {
+                const settingsPanel = document.getElementById('settingsPanel');
+                if (settingsPanel) {
+                    settingsPanel.open = settings.settingsPanelOpen;
+                }
+            }
+            
+            // Load debug visibility (Requirement 8.4)
+            if (settings.debugVisible !== undefined) {
+                const debugSection = document.getElementById('debugSection');
+                if (debugSection) {
+                    debugSection.style.display = settings.debugVisible ? 'block' : 'none';
+                }
+            }
             
             // 聲音需要在載入後設定
             if (settings.voice) {
@@ -239,6 +1399,21 @@
         const inputLabel = document.getElementById('inputLabel');
         const textarea = document.getElementById('words');
         
+        // Update tab states
+        const tabs = document.querySelectorAll('.mode-tab');
+        tabs.forEach(tab => {
+            const tabMode = tab.getAttribute('data-mode');
+            if (tabMode === mode) {
+                tab.classList.add('active');
+                tab.setAttribute('aria-selected', 'true');
+                tab.setAttribute('tabindex', '0');
+            } else {
+                tab.classList.remove('active');
+                tab.setAttribute('aria-selected', 'false');
+                tab.setAttribute('tabindex', '-1');
+            }
+        });
+        
         if (mode === 'word') {
             wordControls.classList.remove('hidden');
             articleControls.classList.add('hidden');
@@ -250,7 +1425,231 @@
             inputLabel.textContent = '輸入文章：';
             textarea.placeholder = '今天天氣很好。我們一起去公園玩吧！';
         }
+        
+        // Update settings preview when mode changes
+        updateSettingsPreview();
+        
+        // Update word counter when mode changes
+        updateWordCounter();
     }
+    
+    // Mode tab click handlers
+    function initModeTabs() {
+        const tabs = document.querySelectorAll('.mode-tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const mode = this.getAttribute('data-mode');
+                // Update hidden radio button
+                document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1)).checked = true;
+                toggleMode();
+                saveSettings();
+            });
+            
+            // Keyboard navigation for accessibility
+            tab.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    const tabs = Array.from(document.querySelectorAll('.mode-tab'));
+                    const currentIndex = tabs.indexOf(this);
+                    let newIndex;
+                    
+                    if (e.key === 'ArrowRight') {
+                        newIndex = (currentIndex + 1) % tabs.length;
+                    } else {
+                        newIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+                    }
+                    
+                    tabs[newIndex].click();
+                    tabs[newIndex].focus();
+                }
+            });
+        });
+    }
+    
+    // Initialize mode tabs on page load
+    document.addEventListener('DOMContentLoaded', initModeTabs);
+
+    // Language tab click handlers
+    function initLangTabs() {
+        const tabs = document.querySelectorAll('.lang-tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const lang = this.getAttribute('data-lang');
+                
+                // Update hidden select
+                document.getElementById('langSelect').value = lang;
+                
+                // Update tab states
+                tabs.forEach(t => {
+                    if (t.getAttribute('data-lang') === lang) {
+                        t.classList.add('active');
+                        t.setAttribute('aria-selected', 'true');
+                        t.setAttribute('tabindex', '0');
+                    } else {
+                        t.classList.remove('active');
+                        t.setAttribute('aria-selected', 'false');
+                        t.setAttribute('tabindex', '-1');
+                    }
+                });
+                
+                // Trigger voice options update
+                updateVoiceOptions();
+                updateWordCounter();
+                saveSettings();
+            });
+            
+            // Keyboard navigation for accessibility
+            tab.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    const tabs = Array.from(document.querySelectorAll('.lang-tab'));
+                    const currentIndex = tabs.indexOf(this);
+                    let newIndex;
+                    
+                    if (e.key === 'ArrowRight') {
+                        newIndex = (currentIndex + 1) % tabs.length;
+                    } else {
+                        newIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+                    }
+                    
+                    tabs[newIndex].click();
+                    tabs[newIndex].focus();
+                }
+            });
+        });
+    }
+    
+    // Initialize language tabs on page load
+    document.addEventListener('DOMContentLoaded', initLangTabs);
+
+    // ==================== 觸覺反饋 (Haptic Feedback) ====================
+    
+    /**
+     * 觸發觸覺反饋
+     * @param {string} type - 反饋類型: 'light', 'medium', 'heavy'
+     */
+    function triggerHaptic(type = 'light') {
+        if (!navigator.vibrate) return;
+        
+        const patterns = {
+            light: 10,    // 輕微震動
+            medium: 25,   // 中等震動
+            heavy: 50     // 強烈震動
+        };
+        
+        try {
+            navigator.vibrate(patterns[type] || patterns.light);
+        } catch (e) {
+            // 靜默失敗，某些瀏覽器可能不支援
+        }
+    }
+    
+    // 為所有按鈕添加觸覺反饋
+    function initHapticFeedback() {
+        // 主要控制按鈕
+        const buttons = document.querySelectorAll('button, .mode-tab, .lang-tab, .settings-panel summary');
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => triggerHaptic('light'));
+        });
+        
+        // 開始按鈕使用中等反饋
+        const startBtn = document.getElementById('startBtn');
+        if (startBtn) {
+            startBtn.addEventListener('click', () => triggerHaptic('medium'));
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', initHapticFeedback);
+
+    // ==================== 滑動手勢支援 ====================
+    
+    /**
+     * 初始化滑動手勢切換模式
+     */
+    function initSwipeGestures() {
+        const modeTabsContainer = document.querySelector('.mode-tabs');
+        if (!modeTabsContainer) return;
+        
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const minSwipeDistance = 50; // 最小滑動距離
+        
+        modeTabsContainer.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        
+        modeTabsContainer.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleModeSwipe();
+        }, { passive: true });
+        
+        function handleModeSwipe() {
+            const swipeDistance = touchEndX - touchStartX;
+            
+            if (Math.abs(swipeDistance) < minSwipeDistance) return;
+            
+            const currentMode = document.querySelector('input[name="mode"]:checked').value;
+            let newMode;
+            
+            if (swipeDistance > 0) {
+                // 向右滑動 → 切換到「讀詞語」
+                newMode = 'word';
+            } else {
+                // 向左滑動 → 切換到「讀文章」
+                newMode = 'article';
+            }
+            
+            if (newMode !== currentMode) {
+                // 更新隱藏的 radio button
+                document.getElementById('mode' + newMode.charAt(0).toUpperCase() + newMode.slice(1)).checked = true;
+                toggleMode();
+                saveSettings();
+                triggerHaptic('medium'); // 切換時觸發中等反饋
+            }
+        }
+        
+        // 同樣為語言 Tab 添加滑動支援
+        const langTabsContainer = document.querySelector('.lang-tabs');
+        if (!langTabsContainer) return;
+        
+        let langTouchStartX = 0;
+        let langTouchEndX = 0;
+        
+        langTabsContainer.addEventListener('touchstart', (e) => {
+            langTouchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        
+        langTabsContainer.addEventListener('touchend', (e) => {
+            langTouchEndX = e.changedTouches[0].screenX;
+            handleLangSwipe();
+        }, { passive: true });
+        
+        function handleLangSwipe() {
+            const swipeDistance = langTouchEndX - langTouchStartX;
+            
+            if (Math.abs(swipeDistance) < minSwipeDistance) return;
+            
+            const langTabs = Array.from(document.querySelectorAll('.lang-tab'));
+            const currentLang = document.getElementById('langSelect').value;
+            const currentIndex = langTabs.findIndex(tab => tab.getAttribute('data-lang') === currentLang);
+            
+            let newIndex;
+            if (swipeDistance > 0) {
+                // 向右滑動 → 上一個語言
+                newIndex = Math.max(0, currentIndex - 1);
+            } else {
+                // 向左滑動 → 下一個語言
+                newIndex = Math.min(langTabs.length - 1, currentIndex + 1);
+            }
+            
+            if (newIndex !== currentIndex) {
+                langTabs[newIndex].click();
+                triggerHaptic('medium');
+            }
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', initSwipeGestures);
 
     // 載入可用聲音（含重試機制）
     let voiceLoadRetries = 0;
@@ -419,7 +1818,56 @@
 
     // 監聽設定變更並自動保存
     document.querySelectorAll('select, input').forEach(el => {
-        el.addEventListener('change', saveSettings);
+        el.addEventListener('change', () => {
+            saveSettings();
+            updateSettingsPreview();
+        });
+    });
+    
+    // Initialize settings preview on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        initSettingsControls(); // Initialize new slider/stepper/segmented controls
+        updateSettingsPreview();
+        initSettingsPanel();
+        initDebugSection(); // Initialize debug section visibility
+        updateWordCounter(); // Initialize word counter on page load
+        
+        // Add input event listener for real-time word counter updates
+        const textarea = document.getElementById('words');
+        if (textarea) {
+            textarea.addEventListener('input', updateWordCounter);
+            textarea.addEventListener('input', function() {
+                autoExpandTextarea(this);
+            });
+            // Initialize textarea height on page load
+            autoExpandTextarea(textarea);
+        }
+        
+        // Update word counter when language changes
+        const langSelect = document.getElementById('langSelect');
+        if (langSelect) {
+            langSelect.addEventListener('change', updateWordCounter);
+        }
+        
+        // Hidden gesture: Triple tap on title to toggle debug section
+        let tapCount = 0;
+        let tapTimer = null;
+        const title = document.querySelector('h2');
+        if (title) {
+            title.addEventListener('click', () => {
+                tapCount++;
+                if (tapTimer) clearTimeout(tapTimer);
+                
+                if (tapCount >= 3) {
+                    toggleDebugVisibility();
+                    tapCount = 0;
+                } else {
+                    tapTimer = setTimeout(() => {
+                        tapCount = 0;
+                    }, 500); // Reset after 500ms
+                }
+            });
+        }
     });
 
 
@@ -454,10 +1902,13 @@
                     const elapsed = Date.now() - start;
                     if (elapsed >= ms) {
                         clearInterval(timer);
+                        status.classList.remove('waiting');
                         resolve();
                     } else if (showCountdown && status) {
                         const remaining = Math.ceil((ms - elapsed) / 1000);
                         status.innerText = `等待中... (${remaining} 秒)`;
+                        status.classList.add('waiting');
+                        status.classList.remove('reading', 'paused');
                     }
                 }
             }, 100);
@@ -511,6 +1962,9 @@
         setButtonsState(true);
         const status = document.getElementById('status');
 
+        // Reset progress at start
+        resetProgress();
+
         try {
             if (mode === 'word') {
                 await readWords(text, lang, selectedVoice, status);
@@ -520,10 +1974,13 @@
 
             if (!isStopped) {
                 status.innerText = "播放完畢";
+                status.classList.remove('reading', 'paused', 'waiting');
+                updateCurrentWord("播放完畢");
             }
         } catch (error) {
             console.error('朗讀過程發生錯誤:', error);
             status.innerText = '發生錯誤，請重試';
+            status.classList.remove('reading', 'paused', 'waiting');
         }
         resetButtons();
     }
@@ -536,8 +1993,15 @@
         const lines = text.split('\n').map(s => s.trim()).filter(s => s !== "");
         if (lines.length === 0) return;
 
-        for (let line of lines) {
+        // Initialize progress
+        updateProgress(0, lines.length);
+
+        for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+            const line = lines[lineIdx];
             if (isStopped) break;
+
+            // Update current word display
+            updateCurrentWord(line);
 
             for (let i = 1; i <= repeatPerLine; i++) {
                 if (isStopped) break;
@@ -546,6 +2010,8 @@
                 do {
                     wasInterrupted = false;
                     status.innerText = `正在朗讀: ${line} (第 ${i}/${repeatPerLine} 次)`;
+                    status.classList.add('reading');
+                    status.classList.remove('paused', 'waiting');
                     await speakPromise(line, lang, selectedVoice, speechRate);
                     
                     // 如果被中斷，等待恢復
@@ -561,6 +2027,11 @@
                     await wait(interval, status, true);
                 }
             }
+
+            // Update progress after completing each word
+            if (!isStopped) {
+                updateProgress(lineIdx + 1, lines.length);
+            }
         }
     }
 
@@ -571,9 +2042,15 @@
         const sentences = splitIntoSentences(text);
         if (sentences.length === 0) return;
 
+        // Initialize progress
+        updateProgress(0, sentences.length);
+
         for (let idx = 0; idx < sentences.length; idx++) {
             const sentence = sentences[idx];
             if (isStopped) break;
+
+            // Update current word display
+            updateCurrentWord(sentence);
 
             // 計算每次朗讀後的等待時間 = 總等待時間 / 朗讀次數
             const totalWaitTime = calculateWaitTime(sentence, lang);
@@ -586,6 +2063,8 @@
                 do {
                     wasInterrupted = false;
                     status.innerText = `正在朗讀 (${idx + 1}/${sentences.length}): ${sentence} (第 ${i}/${sentenceRepeat} 次)`;
+                    status.classList.add('reading');
+                    status.classList.remove('paused', 'waiting');
                     await speakPromise(sentence, lang, selectedVoice, speechRate);
                     
                     // 如果被中斷，等待恢復
@@ -601,6 +2080,11 @@
                 if (!isStopped && !(idx === sentences.length - 1 && i === sentenceRepeat)) {
                     await wait(waitPerRepeat, status, true);
                 }
+            }
+
+            // Update progress after completing each sentence
+            if (!isStopped) {
+                updateProgress(idx + 1, sentences.length);
             }
         }
     }
@@ -764,11 +2248,14 @@
             synth.cancel();
             isSpeaking = false;
             btn.innerText = "恢復";
-            status.innerText = "暫停中...";
+            status.innerText = "⏸️ 暫停中...";
+            status.classList.add('paused');
+            status.classList.remove('reading', 'waiting');
         } else {
             isPaused = false;
             skipNextWait = true;  // 恢復後跳過等待
             btn.innerText = "暫停";
+            status.classList.remove('paused');
         }
     }
 
@@ -786,7 +2273,10 @@
         synth.cancel();
         if (window.currentTimer) clearInterval(window.currentTimer);
         resetButtons();
-        document.getElementById('status').innerText = "已取消";
+        resetProgress();
+        const status = document.getElementById('status');
+        status.innerText = "已取消";
+        status.classList.remove('reading', 'paused', 'waiting');
     }
 
     function setButtonsState(running) {
