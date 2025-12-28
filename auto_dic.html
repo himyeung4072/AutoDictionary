@@ -657,6 +657,25 @@
                     <div class="settings-control-group">
                         <label>詞語重讀次數：</label>
                         <div class="segmented-control" id="repeatCountSegments" role="radiogroup" aria-label="詞語重讀次數">
+                            <button class="segment active" data-value="1" role="radio" aria-checked="true">1</button>
+                            <button class="segment" data-value="2" role="radio" aria-checked="false">2</button>
+                            <button class="segment" data-value="3" role="radio" aria-checked="false">3</button>
+                            <button class="segment" data-value="4" role="radio" aria-checked="false">4</button>
+                            <button class="segment" data-value="5" role="radio" aria-checked="false">5</button>
+                            <button class="segment" data-value="6" role="radio" aria-checked="false">6</button>
+                            <button class="segment" data-value="7" role="radio" aria-checked="false">7</button>
+                            <button class="segment" data-value="8" role="radio" aria-checked="false">8</button>
+                            <button class="segment" data-value="9" role="radio" aria-checked="false">9</button>
+                            <button class="segment" data-value="10" role="radio" aria-checked="false">10</button>
+                        </div>
+                        <input type="hidden" id="repeatCount" value="1">
+                    </div>
+                    
+                    <!-- Interval: Segmented Control -->
+                    <div class="settings-control-group">
+                        <label>每字書寫時間 (秒)：</label>
+                        <div class="segmented-control" id="intervalSegments" role="radiogroup" aria-label="每字書寫時間">
+                            <button class="segment" data-value="0" role="radio" aria-checked="false">0</button>
                             <button class="segment" data-value="1" role="radio" aria-checked="false">1</button>
                             <button class="segment" data-value="2" role="radio" aria-checked="false">2</button>
                             <button class="segment active" data-value="3" role="radio" aria-checked="true">3</button>
@@ -668,26 +687,7 @@
                             <button class="segment" data-value="9" role="radio" aria-checked="false">9</button>
                             <button class="segment" data-value="10" role="radio" aria-checked="false">10</button>
                         </div>
-                        <input type="hidden" id="repeatCount" value="3">
-                    </div>
-                    
-                    <!-- Interval: Segmented Control -->
-                    <div class="settings-control-group">
-                        <label>每字書寫時間 (秒)：</label>
-                        <div class="segmented-control" id="intervalSegments" role="radiogroup" aria-label="每字書寫時間">
-                            <button class="segment" data-value="0" role="radio" aria-checked="false">0</button>
-                            <button class="segment" data-value="1" role="radio" aria-checked="false">1</button>
-                            <button class="segment" data-value="2" role="radio" aria-checked="false">2</button>
-                            <button class="segment" data-value="3" role="radio" aria-checked="false">3</button>
-                            <button class="segment" data-value="4" role="radio" aria-checked="false">4</button>
-                            <button class="segment active" data-value="5" role="radio" aria-checked="true">5</button>
-                            <button class="segment" data-value="6" role="radio" aria-checked="false">6</button>
-                            <button class="segment" data-value="7" role="radio" aria-checked="false">7</button>
-                            <button class="segment" data-value="8" role="radio" aria-checked="false">8</button>
-                            <button class="segment" data-value="9" role="radio" aria-checked="false">9</button>
-                            <button class="segment" data-value="10" role="radio" aria-checked="false">10</button>
-                        </div>
-                        <input type="hidden" id="interval" value="5">
+                        <input type="hidden" id="interval" value="3">
                         <div class="settings-hint">例：2字詞語 × 2秒 = 等待4秒</div>
                     </div>
                 </div>
@@ -711,8 +711,8 @@
                     <div class="settings-control-group">
                         <label>句子重讀次數：</label>
                         <div class="segmented-control" id="sentenceRepeatSegments" role="radiogroup" aria-label="句子重讀次數">
-                            <button class="segment" data-value="1" role="radio" aria-checked="false">1</button>
-                            <button class="segment active" data-value="2" role="radio" aria-checked="true">2</button>
+                            <button class="segment active" data-value="1" role="radio" aria-checked="true">1</button>
+                            <button class="segment" data-value="2" role="radio" aria-checked="false">2</button>
                             <button class="segment" data-value="3" role="radio" aria-checked="false">3</button>
                             <button class="segment" data-value="4" role="radio" aria-checked="false">4</button>
                             <button class="segment" data-value="5" role="radio" aria-checked="false">5</button>
@@ -722,7 +722,7 @@
                             <button class="segment" data-value="9" role="radio" aria-checked="false">9</button>
                             <button class="segment" data-value="10" role="radio" aria-checked="false">10</button>
                         </div>
-                        <input type="hidden" id="sentenceRepeat" value="2">
+                        <input type="hidden" id="sentenceRepeat" value="1">
                     </div>
                     
                     <!-- Char Wait Time: Segmented Control -->
@@ -1101,6 +1101,26 @@
     }
     
     /**
+     * Update all segmented control indicators within a container
+     * @param {HTMLElement} container - The container element
+     */
+    function updateSegmentedControlIndicators(container) {
+        if (!container) return;
+        const segmentedControls = container.querySelectorAll('.segmented-control');
+        segmentedControls.forEach(control => {
+            const activeSegment = control.querySelector('.segment.active');
+            const indicator = control.querySelector('.segment-indicator');
+            if (activeSegment && indicator) {
+                indicator.style.transition = 'none';
+                indicator.style.left = activeSegment.offsetLeft + 'px';
+                indicator.style.width = activeSegment.offsetWidth + 'px';
+                indicator.offsetHeight; // Force reflow
+                indicator.style.transition = '';
+            }
+        });
+    }
+    
+    /**
      * Initialize segmented control event listeners with sliding indicator
      * @param {string} containerId - ID of the segmented control container
      * @param {string} hiddenInputId - ID of the hidden input to sync value
@@ -1380,6 +1400,9 @@
 
     // 保存設定到 localStorage
     function saveSettings() {
+        // 如果正在載入設定，不要儲存（避免覆蓋）
+        if (window.isLoadingSettings) return;
+        
         const settingsPanel = document.getElementById('settingsPanel');
         const debugSection = document.getElementById('debugSection');
         
@@ -1395,10 +1418,15 @@
             charWaitTime: document.getElementById('charWaitTime').value,
             // New settings for panel state and debug visibility (Requirements 4.6, 8.4)
             settingsPanelOpen: settingsPanel ? settingsPanel.open : true,
-            debugVisible: debugSection ? (debugSection.style.display !== 'none') : false
+            debugVisible: debugSection ? (debugSection.style.display !== 'none') : false,
+            // 儲存 textarea 內容
+            textContent: document.getElementById('words').value
         };
         localStorage.setItem('dictationSettings', JSON.stringify(settings));
     }
+
+    // 標記是否正在載入設定（防止載入時觸發 saveSettings）
+    window.isLoadingSettings = true; // 預設為 true，直到 DOMContentLoaded 完成
 
     // 載入設定從 localStorage
     function loadSettings() {
@@ -1428,6 +1456,29 @@
                 const modeRadio = document.getElementById('mode' + settings.mode.charAt(0).toUpperCase() + settings.mode.slice(1));
                 if (modeRadio) {
                     modeRadio.checked = true;
+                }
+                // Update mode tabs UI
+                const modeTabs = document.querySelectorAll('.mode-tab');
+                modeTabs.forEach(tab => {
+                    if (tab.getAttribute('data-mode') === settings.mode) {
+                        tab.classList.add('active');
+                        tab.setAttribute('aria-selected', 'true');
+                        tab.setAttribute('tabindex', '0');
+                    } else {
+                        tab.classList.remove('active');
+                        tab.setAttribute('aria-selected', 'false');
+                        tab.setAttribute('tabindex', '-1');
+                    }
+                });
+                // Update tab indicator position
+                const activeTab = document.querySelector('.mode-tab.active');
+                const indicator = document.querySelector('.mode-tabs .tab-indicator');
+                if (activeTab && indicator) {
+                    indicator.style.transition = 'none';
+                    indicator.style.left = activeTab.offsetLeft + 'px';
+                    indicator.style.width = activeTab.offsetWidth + 'px';
+                    indicator.offsetHeight; // Force reflow
+                    indicator.style.transition = '';
                 }
                 toggleMode();
             }
@@ -1472,6 +1523,15 @@
                 }
             }
             
+            // 載入 textarea 內容
+            if (settings.textContent !== undefined) {
+                const textarea = document.getElementById('words');
+                if (textarea) {
+                    textarea.value = settings.textContent;
+                    autoExpandTextarea(textarea);
+                }
+            }
+            
             // 聲音需要在載入後設定
             if (settings.voice) {
                 setTimeout(() => {
@@ -1484,6 +1544,7 @@
         } catch (e) {
             console.error('載入設定失敗:', e);
         }
+        // 注意：isLoadingSettings 由 DOMContentLoaded 處理器控制
     }
 
     // 切換模式
@@ -1499,11 +1560,15 @@
             articleControls.classList.add('hidden');
             inputLabel.textContent = '輸入詞語（每行一個）：';
             textarea.placeholder = '蘋果\n香蕉';
+            // 更新 word controls 的 indicator 位置
+            updateSegmentedControlIndicators(wordControls);
         } else {
             wordControls.classList.add('hidden');
             articleControls.classList.remove('hidden');
             inputLabel.textContent = '輸入文章：';
             textarea.placeholder = '今天天氣很好。我們一起去公園玩吧！';
+            // 更新 article controls 的 indicator 位置
+            updateSegmentedControlIndicators(articleControls);
         }
         
         // Update settings preview when mode changes
@@ -2029,10 +2094,7 @@
     document.getElementById('langSelect').addEventListener('change', updateVoiceOptions);
     setTimeout(loadVoices, 100);
 
-    // 載入已保存的設定
-    loadSettings();
-
-    // 監聽設定變更並自動保存
+    // 監聯設定變更並自動保存
     document.querySelectorAll('select, input').forEach(el => {
         el.addEventListener('change', () => {
             saveSettings();
@@ -2042,6 +2104,9 @@
     
     // Initialize settings preview on page load
     document.addEventListener('DOMContentLoaded', () => {
+        // 設定載入中標記，防止初始化過程中觸發 saveSettings
+        window.isLoadingSettings = true;
+        
         initSettingsControls(); // Initialize new slider/stepper/segmented controls
         updateSettingsPreview();
         initSettingsPanel();
@@ -2049,12 +2114,22 @@
         initDebugSection(); // Initialize debug section visibility
         updateWordCounter(); // Initialize word counter on page load
         
+        // 載入已保存的設定（在其他初始化之後）
+        setTimeout(() => {
+            loadSettings();
+            updateSettingsPreview();
+            updateWordCounter(); // 更新詞語計數
+            // 載入完成後才允許儲存
+            window.isLoadingSettings = false;
+        }, 50);
+        
         // Add input event listener for real-time word counter updates
         const textarea = document.getElementById('words');
         if (textarea) {
             textarea.addEventListener('input', updateWordCounter);
             textarea.addEventListener('input', function() {
                 autoExpandTextarea(this);
+                saveSettings(); // 儲存 textarea 內容
             });
             // Initialize textarea height on page load
             autoExpandTextarea(textarea);
