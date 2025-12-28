@@ -329,6 +329,12 @@
             transition: opacity 0.3s ease;
         }
         
+        .settings-hint {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            margin-top: 4px;
+        }
+        
         .settings-right {
             display: flex;
             align-items: center;
@@ -650,8 +656,8 @@
                     
                     <!-- Repeat Count: Segmented Control -->
                     <div class="settings-control-group">
-                        <label>詞語重複次數：</label>
-                        <div class="segmented-control" id="repeatCountSegments" role="radiogroup" aria-label="詞語重複次數">
+                        <label>詞語重讀次數：</label>
+                        <div class="segmented-control" id="repeatCountSegments" role="radiogroup" aria-label="詞語重讀次數">
                             <button class="segment" data-value="1" role="radio" aria-checked="false">1</button>
                             <button class="segment" data-value="2" role="radio" aria-checked="false">2</button>
                             <button class="segment active" data-value="3" role="radio" aria-checked="true">3</button>
@@ -668,8 +674,8 @@
                     
                     <!-- Interval: Segmented Control -->
                     <div class="settings-control-group">
-                        <label>每詞相隔秒數：</label>
-                        <div class="segmented-control" id="intervalSegments" role="radiogroup" aria-label="每詞相隔秒數">
+                        <label>每字書寫時間 (秒)：</label>
+                        <div class="segmented-control" id="intervalSegments" role="radiogroup" aria-label="每字書寫時間">
                             <button class="segment" data-value="0" role="radio" aria-checked="false">0</button>
                             <button class="segment" data-value="1" role="radio" aria-checked="false">1</button>
                             <button class="segment" data-value="2" role="radio" aria-checked="false">2</button>
@@ -683,6 +689,7 @@
                             <button class="segment" data-value="10" role="radio" aria-checked="false">10</button>
                         </div>
                         <input type="hidden" id="interval" value="5">
+                        <div class="settings-hint">例：2字詞語 × 2秒 = 等待4秒</div>
                     </div>
                 </div>
 
@@ -703,8 +710,8 @@
                     
                     <!-- Sentence Repeat: Segmented Control -->
                     <div class="settings-control-group">
-                        <label>句子重複次數：</label>
-                        <div class="segmented-control" id="sentenceRepeatSegments" role="radiogroup" aria-label="句子重複次數">
+                        <label>句子重讀次數：</label>
+                        <div class="segmented-control" id="sentenceRepeatSegments" role="radiogroup" aria-label="句子重讀次數">
                             <button class="segment" data-value="1" role="radio" aria-checked="false">1</button>
                             <button class="segment active" data-value="2" role="radio" aria-checked="true">2</button>
                             <button class="segment" data-value="3" role="radio" aria-checked="false">3</button>
@@ -721,8 +728,8 @@
                     
                     <!-- Char Wait Time: Segmented Control -->
                     <div class="settings-control-group">
-                        <label>每字等待秒數：</label>
-                        <div class="segmented-control" id="charWaitTimeSegments" role="radiogroup" aria-label="每字等待秒數">
+                        <label>每字書寫時間 (秒)：</label>
+                        <div class="segmented-control" id="charWaitTimeSegments" role="radiogroup" aria-label="每字書寫時間">
                             <button class="segment" data-value="0" role="radio" aria-checked="false">0</button>
                             <button class="segment" data-value="1" role="radio" aria-checked="false">1</button>
                             <button class="segment" data-value="2" role="radio" aria-checked="false">2</button>
@@ -2040,6 +2047,21 @@
         }
     }
 
+    // 計算詞語等待時間（讀詞語模式使用）
+    function calculateWordWaitTime(word, lang, charWaitTime) {
+        if (lang.startsWith('zh')) {
+            // 中文：計算漢字數量
+            const charCount = (word.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []).length;
+            const count = charCount > 0 ? charCount : word.length;
+            return count * charWaitTime * 1000;
+        } else {
+            // 英文：計算單詞數量
+            const wordCount = word.split(/\s+/).filter(w => w.length > 0).length;
+            const count = wordCount > 0 ? wordCount : 1;
+            return count * charWaitTime * 1000;
+        }
+    }
+
     async function startReading() {
         const mode = document.querySelector('input[name="mode"]:checked').value;
         const text = document.getElementById('words').value;
@@ -2075,7 +2097,7 @@
     async function readWords(text, lang, selectedVoice) {
         const speechRate = parseFloat(document.getElementById('wordSpeechRate').value) || 0.9;
         const repeatPerLine = Math.max(1, parseInt(document.getElementById('repeatCount').value) || 1);
-        const interval = Math.max(0, parseFloat(document.getElementById('interval').value) || 0) * 1000;
+        const charWaitTime = Math.max(0, parseFloat(document.getElementById('interval').value) || 0);
         
         const lines = text.split('\n').map(s => s.trim()).filter(s => s !== "");
         if (lines.length === 0) return;
@@ -2086,6 +2108,10 @@
         for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
             const line = lines[lineIdx];
             if (isStopped) break;
+
+            // 計算等待時間 = 字數 × 每字書寫時間（與讀文章邏輯相同）
+            const totalWaitTime = calculateWordWaitTime(line, lang, charWaitTime);
+            const waitPerRepeat = totalWaitTime / repeatPerLine;
 
             for (let i = 1; i <= repeatPerLine; i++) {
                 if (isStopped) break;
@@ -2105,8 +2131,9 @@
                 // 重讀完成後重置跳過等待標記，確保後續正常等待
                 skipNextWait = false;
 
-                if (!(line === lines[lines.length-1] && i === repeatPerLine)) {
-                    await wait(interval, true);
+                // 每次朗讀後都等待（最後一詞的最後一次不等待）
+                if (!isStopped && !(lineIdx === lines.length - 1 && i === repeatPerLine)) {
+                    await wait(waitPerRepeat, true);
                 }
             }
 
