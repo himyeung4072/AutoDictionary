@@ -2087,66 +2087,7 @@
         }
     });
 
-    // 開始倒數計時（從朗讀開始時就顯示）
-    function startCountdown(totalMs, startTime) {
-        const timer = setInterval(() => {
-            if (isStopped) {
-                clearInterval(timer);
-                return;
-            }
-            if (!isPaused) {
-                const elapsed = Date.now() - startTime;
-                const remaining = Math.ceil((totalMs - elapsed) / 1000);
-                if (remaining > 0) {
-                    updateStatus(document.getElementById('statusReading').textContent, `等待中 ${remaining}秒`);
-                } else {
-                    clearInterval(timer);
-                    updateStatus(document.getElementById('statusReading').textContent, '');
-                }
-            }
-        }, 100);
-        return timer;
-    }
 
-    // 等待剩餘時間（使用已存在的倒數計時器）
-    function waitRemaining(ms, countdownTimer) {
-        return new Promise(resolve => {
-            if (skipNextWait || ms <= 0) {
-                skipNextWait = false;
-                clearInterval(countdownTimer);
-                updateStatus(document.getElementById('statusReading').textContent, '');
-                resolve();
-                return;
-            }
-            
-            const start = Date.now();
-            const timer = setInterval(() => {
-                if (isStopped) {
-                    clearInterval(timer);
-                    clearInterval(countdownTimer);
-                    resolve();
-                } else if (isPaused) {
-                    clearInterval(timer);
-                    clearInterval(countdownTimer);
-                    skipNextWait = true;
-                    const waitResume = setInterval(() => {
-                        if (isStopped || !isPaused) {
-                            clearInterval(waitResume);
-                            resolve();
-                        }
-                    }, 200);
-                } else {
-                    const elapsed = Date.now() - start;
-                    if (elapsed >= ms) {
-                        clearInterval(timer);
-                        clearInterval(countdownTimer);
-                        updateStatus(document.getElementById('statusReading').textContent, '');
-                        resolve();
-                    }
-                }
-            }, 100);
-        });
-    }
 
     // 核心等待函數：支援暫停檢查和間隔計時，並顯示倒數
     function wait(ms, showCountdown = false) {
@@ -2279,10 +2220,14 @@
         const lines = text.split('\n').map(s => s.trim()).filter(s => s !== "");
         if (lines.length === 0) return;
 
-        // 先計算每個詞語的時間和總時間（等待時間已包含朗讀時間）
+        // 預估每個詞語的朗讀時間（毫秒）
+        const estimatedSpeakTime = 1500 / speechRate;
+
+        // 先計算每個詞語的時間和總時間
         const wordTimes = lines.map(line => {
             const waitTime = calculateWordWaitTime(line, lang, charWaitTime);
-            return waitTime; // 總時間 = 等待時間 × 重複次數（但等待時間已包含朗讀）
+            const waitPerRepeat = waitTime / repeatPerLine;
+            return (estimatedSpeakTime + waitPerRepeat) * repeatPerLine;
         });
         const totalTime = wordTimes.reduce((sum, t) => sum + t, 0);
         
@@ -2315,12 +2260,6 @@
             for (let i = 1; i <= repeatPerLine; i++) {
                 if (isStopped) break;
 
-                // 記錄開始時間，朗讀時間包含在等待時間內
-                const repeatStartTime = Date.now();
-                
-                // 開始倒數計時（朗讀開始時就顯示）
-                const countdownTimer = startCountdown(waitPerRepeat, repeatStartTime);
-
                 // 如果上一次被中斷，需要重新朗讀
                 do {
                     wasInterrupted = false;
@@ -2336,16 +2275,9 @@
                 // 重讀完成後重置跳過等待標記，確保後續正常等待
                 skipNextWait = false;
 
-                // 計算剩餘等待時間（等待時間 - 已用朗讀時間）
-                const elapsedTime = Date.now() - repeatStartTime;
-                const remainingWait = Math.max(0, waitPerRepeat - elapsedTime);
-
-                // 如果還有剩餘時間且不是最後一詞的最後一次，則等待
-                if (!isStopped && remainingWait > 0 && !(lineIdx === lines.length - 1 && i === repeatPerLine)) {
-                    await waitRemaining(remainingWait, countdownTimer);
-                } else {
-                    clearInterval(countdownTimer);
-                    updateStatus(document.getElementById('statusReading').textContent, '');
+                // 每次朗讀後都等待（最後一詞的最後一次不等待）
+                if (!isStopped && !(lineIdx === lines.length - 1 && i === repeatPerLine)) {
+                    await wait(waitPerRepeat, true);
                 }
             }
         }
@@ -2363,10 +2295,16 @@
         const sentences = splitIntoSentences(text);
         if (sentences.length === 0) return;
 
-        // 先計算每個句子的時間和總時間（等待時間已包含朗讀時間）
+        // 預估每個字的朗讀時間（毫秒）
+        const msPerChar = 200 / speechRate;
+
+        // 先計算每個句子的時間和總時間
         const sentenceTimes = sentences.map(sentence => {
             const waitTime = calculateWaitTime(sentence, lang);
-            return waitTime; // 總時間 = 等待時間（已包含朗讀）
+            const waitPerRepeat = waitTime / sentenceRepeat;
+            const charCount = sentence.length;
+            const estimatedSpeakTime = charCount * msPerChar;
+            return (estimatedSpeakTime + waitPerRepeat) * sentenceRepeat;
         });
         const totalTime = sentenceTimes.reduce((sum, t) => sum + t, 0);
         
@@ -2399,12 +2337,6 @@
             for (let i = 1; i <= sentenceRepeat; i++) {
                 if (isStopped) break;
 
-                // 記錄開始時間，朗讀時間包含在等待時間內
-                const repeatStartTime = Date.now();
-                
-                // 開始倒數計時（朗讀開始時就顯示）
-                const countdownTimer = startCountdown(waitPerRepeat, repeatStartTime);
-
                 // 如果上一次被中斷，需要重新朗讀
                 do {
                     wasInterrupted = false;
@@ -2420,16 +2352,9 @@
                 // 重讀完成後重置跳過等待標記，確保後續正常等待
                 skipNextWait = false;
 
-                // 計算剩餘等待時間（等待時間 - 已用朗讀時間）
-                const elapsedTime = Date.now() - repeatStartTime;
-                const remainingWait = Math.max(0, waitPerRepeat - elapsedTime);
-
-                // 如果還有剩餘時間且不是最後一句的最後一次，則等待
-                if (!isStopped && remainingWait > 0 && !(idx === sentences.length - 1 && i === sentenceRepeat)) {
-                    await waitRemaining(remainingWait, countdownTimer);
-                } else {
-                    clearInterval(countdownTimer);
-                    updateStatus(document.getElementById('statusReading').textContent, '');
+                // 每次朗讀後都等待（最後一句的最後一次不等待）
+                if (!isStopped && !(idx === sentences.length - 1 && i === sentenceRepeat)) {
+                    await wait(waitPerRepeat, true);
                 }
             }
         }
