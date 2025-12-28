@@ -372,200 +372,68 @@
             margin-bottom: 0;
         }
         
-        /* Segmented Control Styles (for speed selection) */
+        /* Segmented Control Styles (for speed selection) - Tab style with sliding indicator */
         .segmented-control {
             display: flex;
             background: #e9ecef;
             border-radius: var(--radius-lg);
-            padding: 3px;
-            gap: 2px;
+            padding: 2px;
+            gap: 0;
+            position: relative;
+        }
+        
+        .segmented-control .segment-indicator {
+            position: absolute;
+            top: 2px;
+            bottom: 2px;
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1), width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 0;
+            pointer-events: none;
         }
         
         .segmented-control .segment {
             flex: 1;
-            padding: 10px 4px;
+            padding: 6px 2px;
             text-align: center;
             border: none;
             background: transparent;
             border-radius: var(--radius-md);
-            font-size: var(--font-size-sm);
+            font-size: var(--font-size-xs);
             font-weight: 500;
             color: var(--color-text-secondary);
             cursor: pointer;
-            transition: all 0.2s ease;
-            min-height: 40px;
+            transition: color 0.3s ease;
+            min-height: 32px;
             white-space: nowrap;
             -webkit-tap-highlight-color: transparent;
+            position: relative;
+            z-index: 1;
         }
         
         .segmented-control .segment:hover {
-            background: rgba(255, 255, 255, 0.5);
+            color: var(--color-text);
+        }
+        
+        .segmented-control .segment:active {
+            background: transparent;
         }
         
         .segmented-control .segment.active {
-            background: var(--color-surface);
-            color: var(--color-primary);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background: transparent;
+            color: var(--color-text);
             font-weight: 600;
         }
         
         .segmented-control .segment:focus {
-            outline: 2px solid var(--color-primary);
-            outline-offset: -2px;
-        }
-        
-        /* Stepper Styles (for repeat count) */
-        .stepper-control {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 0;
-            width: 100%;
-        }
-        
-        .stepper-control .stepper-btn {
-            width: 80px;
-            height: 48px;
-            border: none;
-            background: none !important;
-            background-color: transparent !important;
-            color: var(--color-primary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color 0.15s ease;
-            -webkit-appearance: none;
-            appearance: none;
-            padding: 0;
-            min-height: var(--touch-target-min);
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        .stepper-control .stepper-btn svg {
-            width: 32px;
-            height: 32px;
-            fill: currentColor;
-        }
-        
-        .stepper-control .stepper-btn:hover:not(:disabled) {
-            color: var(--color-primary-dark);
-        }
-        
-        .stepper-control .stepper-btn:active:not(:disabled) {
-            opacity: 0.7;
-        }
-        
-        .stepper-control .stepper-btn:disabled {
-            color: #ccc;
-            cursor: not-allowed;
-            background: none !important;
-            background-color: transparent !important;
-        }
-        
-        .stepper-control .stepper-center {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-        }
-        
-        .stepper-control .stepper-value {
-            font-size: 22px;
-            font-weight: 700;
-            color: var(--color-text);
-            min-width: 32px;
-            text-align: center;
-        }
-        
-        .stepper-control .stepper-unit {
-            font-size: var(--font-size-sm);
-            color: var(--color-text-muted);
-        }
-        
-        /* Slider Styles (for interval seconds) */
-        .slider-label-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        
-        .slider-label-row label {
-            margin-bottom: 0;
-        }
-        
-        .slider-value-display {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--color-primary);
-            background: #e8f5e9;
-            padding: 4px 10px;
-            border-radius: var(--radius-md);
-        }
-        
-        .slider-control {
-            padding: 4px 0;
-        }
-        
-        .slider-control input[type="range"] {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 100%;
-            height: 6px;
-            background: #e0e0e0;
-            border-radius: 3px;
             outline: none;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .slider-control input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 24px;
-            height: 24px;
-            background: var(--color-primary);
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 2px 6px rgba(40, 167, 69, 0.4);
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
-        }
-        
-        .slider-control input[type="range"]::-webkit-slider-thumb:hover {
-            transform: scale(1.1);
-        }
-        
-        .slider-control input[type="range"]::-webkit-slider-thumb:active {
-            transform: scale(0.95);
-        }
-        
-        .slider-control input[type="range"]::-moz-range-thumb {
-            width: 28px;
-            height: 28px;
-            background: var(--color-primary);
-            border-radius: 50%;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 2px 6px rgba(40, 167, 69, 0.4);
-        }
-        
-        .slider-control .slider-ticks {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 2px 0;
-        }
-        
-        .slider-control .slider-tick {
-            font-size: 10px;
-            color: var(--color-text-muted);
-            width: 20px;
-            text-align: center;
         }
         
         /* Settings control group layout */
         .settings-control-group {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
         
         .settings-control-group:last-child {
@@ -780,37 +648,39 @@
                         <input type="hidden" id="wordSpeechRate" value="0.9">
                     </div>
                     
-                    <!-- Repeat Count: Stepper -->
+                    <!-- Repeat Count: Segmented Control -->
                     <div class="settings-control-group">
                         <label>詞語重複次數：</label>
-                        <div class="stepper-control" id="repeatCountStepper">
-                            <button class="stepper-btn" data-action="decrease" aria-label="減少次數">
-                                <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
-                            </button>
-                            <div class="stepper-center">
-                                <span class="stepper-value" id="repeatCountValue">3</span>
-                                <span class="stepper-unit">次</span>
-                            </div>
-                            <button class="stepper-btn" data-action="increase" aria-label="增加次數">
-                                <svg viewBox="0 0 24 24"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>
-                            </button>
+                        <div class="segmented-control" id="repeatCountSegments" role="radiogroup" aria-label="詞語重複次數">
+                            <button class="segment" data-value="1" role="radio" aria-checked="false">1</button>
+                            <button class="segment" data-value="2" role="radio" aria-checked="false">2</button>
+                            <button class="segment active" data-value="3" role="radio" aria-checked="true">3</button>
+                            <button class="segment" data-value="4" role="radio" aria-checked="false">4</button>
+                            <button class="segment" data-value="5" role="radio" aria-checked="false">5</button>
+                            <button class="segment" data-value="6" role="radio" aria-checked="false">6</button>
+                            <button class="segment" data-value="7" role="radio" aria-checked="false">7</button>
+                            <button class="segment" data-value="8" role="radio" aria-checked="false">8</button>
+                            <button class="segment" data-value="9" role="radio" aria-checked="false">9</button>
+                            <button class="segment" data-value="10" role="radio" aria-checked="false">10</button>
                         </div>
                         <input type="hidden" id="repeatCount" value="3">
                     </div>
                     
-                    <!-- Interval: Slider -->
+                    <!-- Interval: Segmented Control -->
                     <div class="settings-control-group">
-                        <div class="slider-label-row">
-                            <label>每詞相隔秒數：</label>
-                            <span class="slider-value-display" id="intervalDisplay">5 秒</span>
-                        </div>
-                        <div class="slider-control">
-                            <input type="range" id="intervalSlider" min="0" max="10" value="5" aria-label="每詞相隔秒數">
-                            <div class="slider-ticks">
-                                <span class="slider-tick">0</span>
-                                <span class="slider-tick">5</span>
-                                <span class="slider-tick">10</span>
-                            </div>
+                        <label>每詞相隔秒數：</label>
+                        <div class="segmented-control" id="intervalSegments" role="radiogroup" aria-label="每詞相隔秒數">
+                            <button class="segment" data-value="0" role="radio" aria-checked="false">0</button>
+                            <button class="segment" data-value="1" role="radio" aria-checked="false">1</button>
+                            <button class="segment" data-value="2" role="radio" aria-checked="false">2</button>
+                            <button class="segment" data-value="3" role="radio" aria-checked="false">3</button>
+                            <button class="segment" data-value="4" role="radio" aria-checked="false">4</button>
+                            <button class="segment active" data-value="5" role="radio" aria-checked="true">5</button>
+                            <button class="segment" data-value="6" role="radio" aria-checked="false">6</button>
+                            <button class="segment" data-value="7" role="radio" aria-checked="false">7</button>
+                            <button class="segment" data-value="8" role="radio" aria-checked="false">8</button>
+                            <button class="segment" data-value="9" role="radio" aria-checked="false">9</button>
+                            <button class="segment" data-value="10" role="radio" aria-checked="false">10</button>
                         </div>
                         <input type="hidden" id="interval" value="5">
                     </div>
@@ -831,39 +701,39 @@
                         <input type="hidden" id="speechRate" value="0.9">
                     </div>
                     
-                    <!-- Sentence Repeat: Stepper -->
+                    <!-- Sentence Repeat: Segmented Control -->
                     <div class="settings-control-group">
                         <label>句子重複次數：</label>
-                        <div class="stepper-control" id="sentenceRepeatStepper">
-                            <button class="stepper-btn" data-action="decrease" aria-label="減少次數">
-                                <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
-                            </button>
-                            <div class="stepper-center">
-                                <span class="stepper-value" id="sentenceRepeatValue">2</span>
-                                <span class="stepper-unit">次</span>
-                            </div>
-                            <button class="stepper-btn" data-action="increase" aria-label="增加次數">
-                                <svg viewBox="0 0 24 24"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>
-                            </button>
+                        <div class="segmented-control" id="sentenceRepeatSegments" role="radiogroup" aria-label="句子重複次數">
+                            <button class="segment" data-value="1" role="radio" aria-checked="false">1</button>
+                            <button class="segment active" data-value="2" role="radio" aria-checked="true">2</button>
+                            <button class="segment" data-value="3" role="radio" aria-checked="false">3</button>
+                            <button class="segment" data-value="4" role="radio" aria-checked="false">4</button>
+                            <button class="segment" data-value="5" role="radio" aria-checked="false">5</button>
+                            <button class="segment" data-value="6" role="radio" aria-checked="false">6</button>
+                            <button class="segment" data-value="7" role="radio" aria-checked="false">7</button>
+                            <button class="segment" data-value="8" role="radio" aria-checked="false">8</button>
+                            <button class="segment" data-value="9" role="radio" aria-checked="false">9</button>
+                            <button class="segment" data-value="10" role="radio" aria-checked="false">10</button>
                         </div>
                         <input type="hidden" id="sentenceRepeat" value="2">
                     </div>
                     
-                    <!-- Char Wait Time: Slider -->
+                    <!-- Char Wait Time: Segmented Control -->
                     <div class="settings-control-group">
-                    <!-- Char Wait Time: Slider -->
-                    <div class="settings-control-group">
-                        <div class="slider-label-row">
-                            <label>每字等待秒數：</label>
-                            <span class="slider-value-display" id="charWaitTimeDisplay">3 秒</span>
-                        </div>
-                        <div class="slider-control">
-                            <input type="range" id="charWaitTimeSlider" min="0" max="10" value="3" aria-label="每字等待秒數">
-                            <div class="slider-ticks">
-                                <span class="slider-tick">0</span>
-                                <span class="slider-tick">5</span>
-                                <span class="slider-tick">10</span>
-                            </div>
+                        <label>每字等待秒數：</label>
+                        <div class="segmented-control" id="charWaitTimeSegments" role="radiogroup" aria-label="每字等待秒數">
+                            <button class="segment" data-value="0" role="radio" aria-checked="false">0</button>
+                            <button class="segment" data-value="1" role="radio" aria-checked="false">1</button>
+                            <button class="segment" data-value="2" role="radio" aria-checked="false">2</button>
+                            <button class="segment active" data-value="3" role="radio" aria-checked="true">3</button>
+                            <button class="segment" data-value="4" role="radio" aria-checked="false">4</button>
+                            <button class="segment" data-value="5" role="radio" aria-checked="false">5</button>
+                            <button class="segment" data-value="6" role="radio" aria-checked="false">6</button>
+                            <button class="segment" data-value="7" role="radio" aria-checked="false">7</button>
+                            <button class="segment" data-value="8" role="radio" aria-checked="false">8</button>
+                            <button class="segment" data-value="9" role="radio" aria-checked="false">9</button>
+                            <button class="segment" data-value="10" role="radio" aria-checked="false">10</button>
                         </div>
                         <input type="hidden" id="charWaitTime" value="3">
                     </div>
@@ -1106,58 +976,7 @@
     }
     
     /**
-     * Update stepper display value
-     * @param {string} displayId - ID of the stepper value display element
-     * @param {string|number} value - The value to display
-     */
-    function updateStepperDisplay(displayId, value) {
-        const display = document.getElementById(displayId);
-        if (display) {
-            display.textContent = value;
-        }
-    }
-    
-    /**
-     * Update stepper button disabled states
-     * @param {string} containerId - ID of the stepper container
-     * @param {number} value - Current value
-     * @param {number} min - Minimum value
-     * @param {number} max - Maximum value
-     */
-    function updateStepperButtons(containerId, value, min, max) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        
-        container.querySelectorAll('.stepper-btn').forEach(btn => {
-            const action = btn.getAttribute('data-action');
-            if (action === 'decrease') {
-                btn.disabled = value <= min;
-            } else if (action === 'increase') {
-                btn.disabled = value >= max;
-            }
-        });
-    }
-    
-    /**
-     * Update slider and its display
-     * @param {string} sliderId - ID of the slider input
-     * @param {string} displayId - ID of the value display element
-     * @param {string|number} value - The value to set
-     */
-    function updateSliderDisplay(sliderId, displayId, value) {
-        const slider = document.getElementById(sliderId);
-        const display = document.getElementById(displayId);
-        
-        if (slider) {
-            slider.value = value;
-        }
-        if (display) {
-            display.textContent = value + ' 秒';
-        }
-    }
-    
-    /**
-     * Initialize segmented control event listeners
+     * Initialize segmented control event listeners with sliding indicator
      * @param {string} containerId - ID of the segmented control container
      * @param {string} hiddenInputId - ID of the hidden input to sync value
      * @param {Function} onChange - Callback when value changes
@@ -1166,17 +985,47 @@
         const container = document.getElementById(containerId);
         if (!container) return;
         
-        container.querySelectorAll('.segment').forEach(segment => {
+        const segments = container.querySelectorAll('.segment');
+        
+        // Create sliding indicator
+        const indicator = document.createElement('div');
+        indicator.className = 'segment-indicator';
+        container.appendChild(indicator);
+        
+        // Position indicator on active segment
+        function updateIndicator(activeSegment, animate = true) {
+            if (!activeSegment) return;
+            if (!animate) {
+                indicator.style.transition = 'none';
+            }
+            indicator.style.left = activeSegment.offsetLeft + 'px';
+            indicator.style.width = activeSegment.offsetWidth + 'px';
+            if (!animate) {
+                indicator.offsetHeight; // Force reflow
+                indicator.style.transition = '';
+            }
+        }
+        
+        // Initialize indicator position
+        const initialActive = container.querySelector('.segment.active');
+        if (initialActive) {
+            updateIndicator(initialActive, false);
+        }
+        
+        segments.forEach(segment => {
             segment.addEventListener('click', () => {
                 const value = segment.getAttribute('data-value');
                 
                 // Update UI
-                container.querySelectorAll('.segment').forEach(s => {
+                segments.forEach(s => {
                     s.classList.remove('active');
                     s.setAttribute('aria-checked', 'false');
                 });
                 segment.classList.add('active');
                 segment.setAttribute('aria-checked', 'true');
+                
+                // Animate indicator
+                updateIndicator(segment);
                 
                 // Update hidden input
                 const hiddenInput = document.getElementById(hiddenInputId);
@@ -1188,85 +1037,13 @@
                 if (onChange) onChange(value);
             });
         });
-    }
-    
-    /**
-     * Initialize stepper control event listeners
-     * @param {string} containerId - ID of the stepper container
-     * @param {string} hiddenInputId - ID of the hidden input to sync value
-     * @param {string} displayId - ID of the value display element
-     * @param {number} min - Minimum value
-     * @param {number} max - Maximum value
-     * @param {Function} onChange - Callback when value changes
-     */
-    function initStepperControl(containerId, hiddenInputId, displayId, min, max, onChange) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
         
-        const hiddenInput = document.getElementById(hiddenInputId);
-        const display = document.getElementById(displayId);
-        const buttons = container.querySelectorAll('.stepper-btn');
-        
-        function updateValue(delta) {
-            let currentValue = parseInt(hiddenInput.value) || min;
-            let newValue = Math.max(min, Math.min(max, currentValue + delta));
-            
-            hiddenInput.value = newValue;
-            if (display) display.textContent = newValue;
-            
-            // Update button states
-            buttons.forEach(btn => {
-                const action = btn.getAttribute('data-action');
-                if (action === 'decrease') {
-                    btn.disabled = newValue <= min;
-                } else if (action === 'increase') {
-                    btn.disabled = newValue >= max;
-                }
-            });
-            
-            if (onChange) onChange(newValue);
-        }
-        
-        buttons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const action = btn.getAttribute('data-action');
-                updateValue(action === 'increase' ? 1 : -1);
-            });
-        });
-        
-        // Initialize button states
-        const currentValue = parseInt(hiddenInput.value) || min;
-        buttons.forEach(btn => {
-            const action = btn.getAttribute('data-action');
-            if (action === 'decrease') {
-                btn.disabled = currentValue <= min;
-            } else if (action === 'increase') {
-                btn.disabled = currentValue >= max;
+        // Update indicator on window resize
+        window.addEventListener('resize', () => {
+            const activeSegment = container.querySelector('.segment.active');
+            if (activeSegment) {
+                updateIndicator(activeSegment, false);
             }
-        });
-    }
-    
-    /**
-     * Initialize slider control event listeners
-     * @param {string} sliderId - ID of the slider input
-     * @param {string} hiddenInputId - ID of the hidden input to sync value
-     * @param {string} displayId - ID of the value display element
-     * @param {Function} onChange - Callback when value changes
-     */
-    function initSliderControl(sliderId, hiddenInputId, displayId, onChange) {
-        const slider = document.getElementById(sliderId);
-        const hiddenInput = document.getElementById(hiddenInputId);
-        const display = document.getElementById(displayId);
-        
-        if (!slider) return;
-        
-        slider.addEventListener('input', () => {
-            const value = slider.value;
-            
-            if (hiddenInput) hiddenInput.value = value;
-            if (display) display.textContent = value + ' 秒';
-            
-            if (onChange) onChange(value);
         });
     }
     
@@ -1281,13 +1058,13 @@
         
         // Word mode controls
         initSegmentedControl('wordSpeedSegments', 'wordSpeechRate', onSettingChange);
-        initStepperControl('repeatCountStepper', 'repeatCount', 'repeatCountValue', 1, 10, onSettingChange);
-        initSliderControl('intervalSlider', 'interval', 'intervalDisplay', onSettingChange);
+        initSegmentedControl('repeatCountSegments', 'repeatCount', onSettingChange);
+        initSegmentedControl('intervalSegments', 'interval', onSettingChange);
         
         // Article mode controls
         initSegmentedControl('articleSpeedSegments', 'speechRate', onSettingChange);
-        initStepperControl('sentenceRepeatStepper', 'sentenceRepeat', 'sentenceRepeatValue', 1, 10, onSettingChange);
-        initSliderControl('charWaitTimeSlider', 'charWaitTime', 'charWaitTimeDisplay', onSettingChange);
+        initSegmentedControl('sentenceRepeatSegments', 'sentenceRepeat', onSettingChange);
+        initSegmentedControl('charWaitTimeSegments', 'charWaitTime', onSettingChange);
     }
 
     // Generate settings preview text based on current settings
@@ -1535,12 +1312,11 @@
             }
             if (settings.repeatCount) {
                 document.getElementById('repeatCount').value = settings.repeatCount;
-                updateStepperDisplay('repeatCountValue', settings.repeatCount);
-                updateStepperButtons('repeatCountStepper', parseInt(settings.repeatCount), 1, 10);
+                updateSegmentedControl('repeatCountSegments', settings.repeatCount);
             }
-            if (settings.interval) {
+            if (settings.interval !== undefined) {
                 document.getElementById('interval').value = settings.interval;
-                updateSliderDisplay('intervalSlider', 'intervalDisplay', settings.interval);
+                updateSegmentedControl('intervalSegments', settings.interval);
             }
             if (settings.speechRate) {
                 document.getElementById('speechRate').value = settings.speechRate;
@@ -1548,12 +1324,11 @@
             }
             if (settings.sentenceRepeat) {
                 document.getElementById('sentenceRepeat').value = settings.sentenceRepeat;
-                updateStepperDisplay('sentenceRepeatValue', settings.sentenceRepeat);
-                updateStepperButtons('sentenceRepeatStepper', parseInt(settings.sentenceRepeat), 1, 10);
+                updateSegmentedControl('sentenceRepeatSegments', settings.sentenceRepeat);
             }
-            if (settings.charWaitTime) {
+            if (settings.charWaitTime !== undefined) {
                 document.getElementById('charWaitTime').value = settings.charWaitTime;
-                updateSliderDisplay('charWaitTimeSlider', 'charWaitTimeDisplay', settings.charWaitTime);
+                updateSegmentedControl('charWaitTimeSegments', settings.charWaitTime);
             }
             
             // Load settings panel state (Requirement 4.6)
