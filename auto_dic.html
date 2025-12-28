@@ -2190,22 +2190,39 @@
         });
     }
 
-    // 分割文章為句子
+    // 分割文章為句子（在標點符號和引號處分割）
     function splitIntoSentences(text) {
-        const punctuationPattern = /([。！？；，、．.!?;,])/g;
-        const parts = text.split(punctuationPattern).filter(s => s.trim() !== '');
+        // 包含所有需要分割的標點符號，包括引號
+        const punctuationPattern = /([。！？；，、．.!?;,：:「」""''（）\(\)])/g;
+        const parts = text.split(punctuationPattern).filter(s => s !== '');
         
         const sentences = [];
+        let currentSentence = '';
+        
         for (let i = 0; i < parts.length; i++) {
-            let sentence = parts[i].trim();
-            if (i + 1 < parts.length && /^[。！？；，、．.!?;,]$/.test(parts[i + 1])) {
-                sentence += parts[i + 1];
-                i++;
-            }
-            if (sentence.trim() !== '' && !/^[。！？；，、．.!?;,]$/.test(sentence)) {
-                sentences.push(sentence.trim());
+            const part = parts[i];
+            
+            // 檢查是否為標點符號
+            if (/^[。！？；，、．.!?;,：:「」""''（）\(\)]$/.test(part)) {
+                // 將標點符號加到當前句子
+                currentSentence += part;
+                
+                // 在這些標點符號後分割句子
+                if (currentSentence.trim() !== '') {
+                    sentences.push(currentSentence.trim());
+                    currentSentence = '';
+                }
+            } else {
+                // 普通文字
+                currentSentence += part;
             }
         }
+        
+        // 處理最後剩餘的文字
+        if (currentSentence.trim() !== '') {
+            sentences.push(currentSentence.trim());
+        }
+        
         return sentences;
     }
 
@@ -2486,6 +2503,51 @@
         return voice;
     }
 
+    // 將標點符號轉換為可朗讀的文字
+    function convertPunctuationToSpeech(text, lang) {
+        if (!lang.startsWith('zh')) {
+            // 英文標點符號轉換
+            return text
+                .replace(/，/g, ' comma ')
+                .replace(/。/g, ' period ')
+                .replace(/！/g, ' exclamation mark ')
+                .replace(/？/g, ' question mark ')
+                .replace(/；/g, ' semicolon ')
+                .replace(/：/g, ' colon ')
+                .replace(/、/g, ' pause ')
+                .replace(/"/g, ' left quote ')
+                .replace(/"/g, ' right quote ')
+                .replace(/'/g, ' left single quote ')
+                .replace(/'/g, ' right single quote ')
+                .replace(/「/g, ' left quote ')
+                .replace(/」/g, ' right quote ')
+                .replace(/（/g, ' left parenthesis ')
+                .replace(/）/g, ' right parenthesis ')
+                .replace(/\(/g, ' left parenthesis ')
+                .replace(/\)/g, ' right parenthesis ');
+        } else {
+            // 中文標點符號轉換 - 使用更自然的停頓
+            return text
+                .replace(/，/g, ' 逗號 ')
+                .replace(/。/g, ' 句號 ')
+                .replace(/！/g, ' 感嘆號 ')
+                .replace(/？/g, ' 問號 ')
+                .replace(/；/g, ' 分號 ')
+                .replace(/：/g, ' 冒號 ')
+                .replace(/、/g, ' 頓號 ')
+                .replace(/"/g, ' 左引號 ')
+                .replace(/"/g, ' 右引號 ')
+                .replace(/'/g, ' 左單引號 ')
+                .replace(/'/g, ' 右單引號 ')
+                .replace(/「/g, ' 左引號 ')
+                .replace(/」/g, ' 右引號 ')
+                .replace(/（/g, ' 左括號 ')
+                .replace(/）/g, ' 右括號 ')
+                .replace(/\(/g, ' 左括號 ')
+                .replace(/\)/g, ' 右括號 ');
+        }
+    }
+
     function speakPromise(text, lang, voiceName, rate) {
         return new Promise((resolve) => {
             // 先等待暫停狀態結束
@@ -2520,8 +2582,11 @@
                 synth.cancel();
                 
                 setTimeout(() => {
+                    // 轉換標點符號為可朗讀文字
+                    const speechText = convertPunctuationToSpeech(text, lang);
+                    
                     // 創建新的 utterance
-                    const utterance = new SpeechSynthesisUtterance(text);
+                    const utterance = new SpeechSynthesisUtterance(speechText);
                     utterance.rate = rate;
                     
                     if (selectedVoice) {
