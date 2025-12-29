@@ -5,7 +5,7 @@
  * These tests validate the correctness properties defined in the design document.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fc from 'fast-check';
 
 // Extract the pure functions from the HTML for testing
@@ -1254,6 +1254,483 @@ describe('Responsive Layout Properties', () => {
                         // When min equals value, both should return true
                         expect(touchValid).toBe(true);
                         expect(fontValid).toBe(true);
+                    }
+                ),
+                { numRuns: 100 }
+            );
+        });
+    });
+});
+
+
+/**
+ * Input Sanitization Functions
+ * These are the pure logic functions extracted for testing XSS protection.
+ * Feature: accessibility-ux-improvements
+ */
+
+/**
+ * Sanitize user input by removing HTML tags
+ * Uses DOM innerHTML parsing to safely extract text content
+ * @param {string} text - User input text
+ * @returns {string} Sanitized plain text
+ */
+function sanitizeInput(text) {
+    if (!text || typeof text !== 'string') return '';
+    // 使用 DOM 解析來安全地提取純文字內容
+    const div = document.createElement('div');
+    div.innerHTML = text;
+    return div.textContent || div.innerText || '';
+}
+
+/**
+ * Check if a string contains any HTML tags
+ * @param {string} text - Text to check
+ * @returns {boolean} True if text contains HTML tags
+ */
+function containsHtmlTags(text) {
+    if (!text || typeof text !== 'string') return false;
+    return /<[^>]*>/g.test(text);
+}
+
+describe('Input Sanitization Properties', () => {
+    /**
+     * Property 6: 輸入清理完整性 (Input Sanitization Completeness)
+     * For any input string containing HTML tags, after sanitizeInput processing,
+     * the output SHALL NOT contain any HTML tags, and the original text content SHALL be preserved.
+     * 
+     * **Validates: Requirements 9.1, 9.2, 9.3**
+     */
+    describe('Property 6: Input Sanitization Completeness', () => {
+        // Generator for common HTML tags
+        const htmlTagGen = fc.constantFrom(
+            '<script>', '</script>', '<div>', '</div>', '<span>', '</span>',
+            '<img src="x">', '<a href="javascript:alert(1)">', '<iframe>',
+            '<style>', '</style>', '<link>', '<meta>', '<body>', '<html>',
+            '<input>', '<button>', '<form>', '<svg>', '<object>', '<embed>'
+        );
+
+        // Generator for safe text content (alphanumeric and common punctuation only)
+        const safeTextGen = fc.stringOf(
+            fc.constantFrom(...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,!?你好世界中文'.split(''))
+        );
+
+        // Generator for strings with embedded HTML tags
+        const stringWithHtmlGen = fc.tuple(
+            safeTextGen,
+            htmlTagGen,
+            safeTextGen
+        ).map(([before, tag, after]) => before + tag + after);
+
+        it('should remove all HTML tags from any input string', () => {
+            fc.assert(
+                fc.property(
+                    stringWithHtmlGen,
+                    (inputWithHtml) => {
+                        const sanitized = sanitizeInput(inputWithHtml);
+                        const hasHtmlTags = containsHtmlTags(sanitized);
+                        
+                        expect(hasHtmlTags).toBe(false);
+                    }
+                ),
+                { numRuns: 100 }
+            );
+        });
+
+        it('should preserve safe text content that is not HTML', () => {
+            fc.assert(
+                fc.property(
+                    safeTextGen,
+                    (plainText) => {
+                        const sanitized = sanitizeInput(plainText);
+                        
+                        // Safe text should remain unchanged
+                        expect(sanitized).toBe(plainText);
+                    }
+                ),
+                { numRuns: 100 }
+            );
+        });
+
+        it('should handle script tags with content', () => {
+            fc.assert(
+                fc.property(
+                    safeTextGen.filter(s => s.length > 0),
+                    (scriptContent) => {
+                        const maliciousInput = `<script>${scriptContent}</script>`;
+                        const sanitized = sanitizeInput(maliciousInput);
+                        
+                        // Should not contain script tags
+                        expect(sanitized).not.toContain('<script>');
+                        expect(sanitized).not.toContain('</script>');
+                    }
+                ),
+                { numRuns: 100 }
+            );
+        });
+
+        it('should handle single HTML tags', () => {
+            fc.assert(
+                fc.property(
+                    htmlTagGen,
+                    safeTextGen,
+                    (tag, content) => {
+                        const input = tag + content;
+                        const sanitized = sanitizeInput(input);
+                        
+                        // Result should not contain the original tag
+                        expect(sanitized).not.toContain(tag);
+                    }
+                ),
+                { numRuns: 100 }
+            );
+        });
+
+        it('should handle event handler attributes', () => {
+            const eventHandlers = [
+                '<div onclick="alert(1)">test</div>',
+                '<img onerror="alert(1)" src="x">',
+                '<a onmouseover="alert(1)">link</a>',
+                '<input onfocus="alert(1)">'
+            ];
+            
+            fc.assert(
+                fc.property(
+                    fc.constantFrom(...eventHandlers),
+                    (eventTag) => {
+                        const sanitized = sanitizeInput(eventTag);
+                        
+                        // Should not contain any HTML tags
+                        expect(containsHtmlTags(sanitized)).toBe(false);
+                        // Should not contain event handlers
+                        expect(sanitized).not.toMatch(/on\w+=/i);
+                    }
+                ),
+                { numRuns: 100 }
+            );
+        });
+
+        it('should return empty string for null or undefined input', () => {
+            expect(sanitizeInput(null)).toBe('');
+            expect(sanitizeInput(undefined)).toBe('');
+        });
+
+        it('should return empty string for non-string input', () => {
+            fc.assert(
+                fc.property(
+                    fc.oneof(
+                        fc.integer(),
+                        fc.boolean(),
+                        fc.constant({}),
+                        fc.constant([])
+                    ),
+                    (nonStringInput) => {
+                        const sanitized = sanitizeInput(nonStringInput);
+                        
+                        expect(sanitized).toBe('');
+                    }
+                ),
+                { numRuns: 100 }
+            );
+        });
+
+        it('should handle empty string input', () => {
+            const sanitized = sanitizeInput('');
+            expect(sanitized).toBe('');
+        });
+
+        it('should preserve Chinese characters while removing HTML', () => {
+            fc.assert(
+                fc.property(
+                    safeTextGen.filter(s => s.length > 0),
+                    (content) => {
+                        const textWithChinese = '你好' + content + '世界';
+                        const inputWithHtml = `<script>${textWithChinese}</script>`;
+                        const sanitized = sanitizeInput(inputWithHtml);
+                        
+                        // Should not contain HTML tags
+                        expect(containsHtmlTags(sanitized)).toBe(false);
+                        // Should preserve the Chinese text
+                        expect(sanitized).toContain('你好');
+                        expect(sanitized).toContain('世界');
+                    }
+                ),
+                { numRuns: 100 }
+            );
+        });
+
+        it('should be idempotent - sanitizing twice gives same result', () => {
+            fc.assert(
+                fc.property(
+                    stringWithHtmlGen,
+                    (input) => {
+                        const sanitized1 = sanitizeInput(input);
+                        const sanitized2 = sanitizeInput(sanitized1);
+                        
+                        expect(sanitized1).toBe(sanitized2);
+                    }
+                ),
+                { numRuns: 100 }
+            );
+        });
+
+        it('should decode HTML entities to their character equivalents', () => {
+            // innerHTML decodes HTML entities, which is expected behavior
+            const inputWithEntities = '&lt;script&gt;alert(1)&lt;/script&gt;';
+            const sanitized = sanitizeInput(inputWithEntities);
+            
+            // Entities are decoded, then the resulting tags are stripped
+            // So the output should be the text content: "alert(1)"
+            expect(sanitized).not.toContain('&lt;');
+            expect(sanitized).not.toContain('&gt;');
+        });
+
+        it('should extract text content from well-formed HTML', () => {
+            fc.assert(
+                fc.property(
+                    safeTextGen.filter(s => s.length > 0),
+                    (content) => {
+                        const wellFormedHtml = `<div><span>${content}</span></div>`;
+                        const sanitized = sanitizeInput(wellFormedHtml);
+                        
+                        expect(sanitized).toBe(content);
+                    }
+                ),
+                { numRuns: 100 }
+            );
+        });
+    });
+});
+
+
+/**
+ * Debounce Function Properties
+ * These are the pure logic functions extracted for testing debounce behavior.
+ * Feature: accessibility-ux-improvements
+ */
+
+/**
+ * Debounce function implementation (same as in auto_dic.html)
+ * @param {Function} func - Function to debounce
+ * @param {number} wait - Wait time in milliseconds
+ * @returns {Function} Debounced function
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func.apply(this, args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+describe('Debounce Function Properties', () => {
+    /**
+     * Property 9: 防抖函數行為 (Debounce Function Behavior)
+     * For any sequence of rapid function calls, the debounced function SHALL
+     * execute far fewer times than the number of calls, and the last call's
+     * arguments SHALL be used.
+     * 
+     * **Validates: Requirements 14.1, 14.2, 14.3**
+     */
+    describe('Property 9: Debounce Function Behavior', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('should execute only once for rapid consecutive calls', () => {
+            fc.assert(
+                fc.property(
+                    fc.integer({ min: 2, max: 20 }), // number of rapid calls
+                    fc.integer({ min: 100, max: 1000 }), // debounce wait time
+                    (numCalls, waitTime) => {
+                        let executionCount = 0;
+                        const trackedFunc = () => { executionCount++; };
+                        const debouncedFunc = debounce(trackedFunc, waitTime);
+                        
+                        // Make rapid consecutive calls
+                        for (let i = 0; i < numCalls; i++) {
+                            debouncedFunc();
+                        }
+                        
+                        // Before timer fires, should not have executed
+                        expect(executionCount).toBe(0);
+                        
+                        // Advance time past the wait period
+                        vi.advanceTimersByTime(waitTime + 10);
+                        
+                        // Should have executed exactly once
+                        expect(executionCount).toBe(1);
+                    }
+                ),
+                { numRuns: 100 }
+            );
+        });
+
+        it('should use the last call arguments', () => {
+            fc.assert(
+                fc.property(
+                    fc.array(fc.integer({ min: 0, max: 1000 }), { minLength: 2, maxLength: 10 }),
+                    fc.integer({ min: 100, max: 500 }), // debounce wait time
+                    (callArgs, waitTime) => {
+                        let lastReceivedArg = null;
+                        const trackedFunc = (arg) => { lastReceivedArg = arg; };
+                        const debouncedFunc = debounce(trackedFunc, waitTime);
+                        
+                        // Make calls with different arguments
+                        callArgs.forEach(arg => {
+                            debouncedFunc(arg);
+                        });
+                        
+                        // Advance time past the wait period
+                        vi.advanceTimersByTime(waitTime + 10);
+                        
+                        // Should have received the last argument
+                        const expectedLastArg = callArgs[callArgs.length - 1];
+                        expect(lastReceivedArg).toBe(expectedLastArg);
+                    }
+                ),
+                { numRuns: 100 }
+            );
+        });
+
+        it('should reset timer on each call', () => {
+            fc.assert(
+                fc.property(
+                    fc.integer({ min: 100, max: 500 }), // debounce wait time
+                    (waitTime) => {
+                        let executionCount = 0;
+                        const trackedFunc = () => { executionCount++; };
+                        const debouncedFunc = debounce(trackedFunc, waitTime);
+                        
+                        // First call
+                        debouncedFunc();
+                        
+                        // Advance time but not past wait period
+                        vi.advanceTimersByTime(waitTime - 50);
+                        expect(executionCount).toBe(0);
+                        
+                        // Second call - should reset timer
+                        debouncedFunc();
+                        
+                        // Advance time past original wait period but not new one
+                        vi.advanceTimersByTime(60);
+                        expect(executionCount).toBe(0);
+                        
+                        // Advance time past new wait period
+                        vi.advanceTimersByTime(waitTime);
+                        expect(executionCount).toBe(1);
+                    }
+                ),
+                { numRuns: 100 }
+            );
+        });
+
+        it('should allow multiple executions with sufficient delay between calls', () => {
+            fc.assert(
+                fc.property(
+                    fc.integer({ min: 2, max: 5 }), // number of call groups
+                    fc.integer({ min: 100, max: 300 }), // debounce wait time
+                    (numGroups, waitTime) => {
+                        let executionCount = 0;
+                        const trackedFunc = () => { executionCount++; };
+                        const debouncedFunc = debounce(trackedFunc, waitTime);
+                        
+                        // Make calls with sufficient delay between groups
+                        for (let i = 0; i < numGroups; i++) {
+                            debouncedFunc();
+                            vi.advanceTimersByTime(waitTime + 50);
+                        }
+                        
+                        // Should have executed once per group
+                        expect(executionCount).toBe(numGroups);
+                    }
+                ),
+                { numRuns: 100 }
+            );
+        });
+
+        it('should handle zero wait time', () => {
+            let executionCount = 0;
+            const trackedFunc = () => { executionCount++; };
+            const debouncedFunc = debounce(trackedFunc, 0);
+            
+            // Make multiple calls
+            debouncedFunc();
+            debouncedFunc();
+            debouncedFunc();
+            
+            // Advance time minimally
+            vi.advanceTimersByTime(1);
+            
+            // Should have executed once
+            expect(executionCount).toBe(1);
+        });
+
+        it('should preserve function context (this)', () => {
+            fc.assert(
+                fc.property(
+                    fc.integer({ min: 100, max: 500 }), // debounce wait time
+                    (waitTime) => {
+                        let capturedContext = null;
+                        const trackedFunc = function() { capturedContext = this; };
+                        const debouncedFunc = debounce(trackedFunc, waitTime);
+                        
+                        const context = { name: 'testContext' };
+                        debouncedFunc.call(context);
+                        
+                        vi.advanceTimersByTime(waitTime + 10);
+                        
+                        expect(capturedContext).toBe(context);
+                    }
+                ),
+                { numRuns: 100 }
+            );
+        });
+
+        it('should handle multiple arguments', () => {
+            fc.assert(
+                fc.property(
+                    fc.integer({ min: 1, max: 100 }),
+                    fc.string({ minLength: 1, maxLength: 10 }),
+                    fc.boolean(),
+                    fc.integer({ min: 100, max: 500 }), // debounce wait time
+                    (numArg, strArg, boolArg, waitTime) => {
+                        let receivedArgs = null;
+                        const trackedFunc = (...args) => { receivedArgs = args; };
+                        const debouncedFunc = debounce(trackedFunc, waitTime);
+                        
+                        debouncedFunc(numArg, strArg, boolArg);
+                        
+                        vi.advanceTimersByTime(waitTime + 10);
+                        
+                        expect(receivedArgs).toEqual([numArg, strArg, boolArg]);
+                    }
+                ),
+                { numRuns: 100 }
+            );
+        });
+
+        it('should not execute if no calls are made', () => {
+            fc.assert(
+                fc.property(
+                    fc.integer({ min: 100, max: 1000 }), // debounce wait time
+                    (waitTime) => {
+                        let executionCount = 0;
+                        const trackedFunc = () => { executionCount++; };
+                        debounce(trackedFunc, waitTime);
+                        
+                        // Advance time without calling
+                        vi.advanceTimersByTime(waitTime * 2);
+                        
+                        expect(executionCount).toBe(0);
                     }
                 ),
                 { numRuns: 100 }

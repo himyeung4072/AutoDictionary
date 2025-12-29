@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>詞語重複朗讀器</title>
+    <title>默書神器</title>
     <style>
         /* CSS Custom Properties */
         :root {
@@ -14,11 +14,11 @@
             --color-danger: #dc3545;
             --color-text: #333;
             --color-text-secondary: #555;
-            --color-text-muted: #666;
+            --color-text-muted: #595959;
             --color-background: #f0f2f5;
             --color-surface: white;
             --color-border: #ddd;
-            --color-disabled: #ccc;
+            --color-disabled: #767676;
             --color-status: #007bff;
             
             /* Spacing */
@@ -117,6 +117,7 @@
             transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1), width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 0;
             pointer-events: none;
+            will-change: left, width;
         }
         
         .mode-tab, .lang-tab {
@@ -206,6 +207,8 @@
             background: linear-gradient(90deg, var(--color-primary), var(--color-primary-dark));
             border-radius: 2px;
             width: 0%;
+            will-change: width;
+            transform: translateZ(0);
         }
         
         .progress-count-inline {
@@ -371,6 +374,7 @@
         .collapsible-content {
             overflow: hidden;
             transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: height;
         }
         
         .settings-panel .number-controls {
@@ -397,6 +401,7 @@
             transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1), width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 0;
             pointer-events: none;
+            will-change: left, width;
         }
         
         .segmented-control .segment {
@@ -571,13 +576,469 @@
         .ios-hint-content li {
             margin-bottom: 2px;
         }
+        
+        /* Prefers Reduced Motion Support */
+        @media (prefers-reduced-motion: reduce) {
+            .tab-indicator,
+            .segment-indicator {
+                transition: none !important;
+            }
+            
+            .collapsible-content {
+                transition: none !important;
+            }
+            
+            .progress-fill {
+                transition: none !important;
+            }
+            
+            .settings-arrow {
+                transition: none !important;
+            }
+            
+            .ios-hint-arrow {
+                transition: none !important;
+            }
+            
+            .mode-tab,
+            .lang-tab,
+            .segment {
+                transition: none !important;
+            }
+        }
+        
+        /* Skip Link Styles */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--color-primary);
+            color: white;
+            padding: var(--spacing-sm) var(--spacing-md);
+            z-index: 1000;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 0 0 var(--radius-md) 0;
+            transition: top 0.3s ease;
+        }
+        
+        .skip-link:focus {
+            top: 0;
+            outline: 3px solid var(--color-primary-dark);
+            outline-offset: 2px;
+        }
+        
+        /* Enhanced Focus Styles - Requirements 5.1, 5.2, 5.3, 5.4, 5.5 */
+        /* Base focus-visible styles for all interactive elements */
+        :focus-visible {
+            outline: 3px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+        
+        /* Remove focus ring for mouse users */
+        :focus:not(:focus-visible) {
+            outline: none;
+        }
+        
+        /* Button focus styles */
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible {
+            outline: 3px solid var(--color-primary);
+            outline-offset: 2px;
+            box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.2);
+        }
+        
+        button:focus:not(:focus-visible),
+        input:focus:not(:focus-visible),
+        select:focus:not(:focus-visible),
+        textarea:focus:not(:focus-visible) {
+            outline: none;
+            box-shadow: none;
+        }
+        
+        /* Mode tab and lang tab focus styles */
+        .mode-tab:focus-visible,
+        .lang-tab:focus-visible {
+            outline: 3px solid var(--color-primary);
+            outline-offset: 2px;
+            border-radius: var(--radius-md);
+            z-index: 2;
+        }
+        
+        .mode-tab:focus:not(:focus-visible),
+        .lang-tab:focus:not(:focus-visible) {
+            outline: none;
+        }
+        
+        /* Segment control focus styles */
+        .segment:focus-visible {
+            outline: 3px solid var(--color-primary);
+            outline-offset: 2px;
+            border-radius: var(--radius-md);
+            z-index: 2;
+        }
+        
+        .segment:focus:not(:focus-visible) {
+            outline: none;
+        }
+        
+        /* Settings panel summary focus styles */
+        .settings-panel summary:focus-visible {
+            outline: 3px solid var(--color-primary);
+            outline-offset: 2px;
+            border-radius: var(--radius-lg);
+        }
+        
+        .settings-panel summary:focus:not(:focus-visible) {
+            outline: none;
+        }
+        
+        /* Player control buttons focus styles */
+        .player-controls button:focus-visible {
+            outline: 3px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+        
+        .player-controls button:focus:not(:focus-visible) {
+            outline: none;
+        }
+        
+        /* Keyboard Shortcut Hint Styles - Requirement 6.4 */
+        .keyboard-hint {
+            font-size: 10px;
+            color: var(--color-text-muted);
+            text-align: center;
+            padding: 2px var(--spacing-lg);
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+        }
+        
+        .keyboard-hint kbd {
+            display: inline-block;
+            padding: 1px 4px;
+            font-size: 10px;
+            font-family: monospace;
+            background: #e9ecef;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            box-shadow: 0 1px 0 #ccc;
+        }
+        
+        /* Hide keyboard hints on mobile/touch devices */
+        @media (hover: none) and (pointer: coarse) {
+            .keyboard-hint {
+                display: none;
+            }
+        }
+        
+        /* Error Toast Styles - Requirements 8.1, 8.2, 8.3, 8.4 */
+        .error-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--color-danger);
+            color: white;
+            padding: var(--spacing-md) var(--spacing-xl);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            max-width: 90%;
+            text-align: center;
+            animation: fadeInOut 3s ease-in-out forwards;
+        }
+        
+        @keyframes fadeInOut {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-10px);
+            }
+            10% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+            90% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-10px);
+            }
+        }
+        
+        /* Input Error Styles - Requirements 15.1, 15.2, 15.3, 15.4 */
+        .input-error {
+            border-color: var(--color-danger) !important;
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            10%, 30%, 50%, 70%, 90% {
+                transform: translateX(-5px);
+            }
+            20%, 40%, 60%, 80% {
+                transform: translateX(5px);
+            }
+        }
+        
+        /* Loading Spinner Styles - Requirements 10.1, 10.2, 10.3 */
+        .select-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .select-wrapper select {
+            flex: 1;
+        }
+        
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--color-border);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+        
+        .loading-spinner[aria-hidden="true"] {
+            display: none;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        /* Dark Mode Support - Requirements 12.1, 12.2, 12.3 */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Dark mode colors */
+                --color-primary: #34d058;
+                --color-primary-dark: #2ea44f;
+                --color-warning: #d29922;
+                --color-danger: #f85149;
+                --color-text: #e6edf3;
+                --color-text-secondary: #b1bac4;
+                --color-text-muted: #8b949e;
+                --color-background: #0d1117;
+                --color-surface: #161b22;
+                --color-border: #30363d;
+                --color-disabled: #6e7681;
+                --color-status: #58a6ff;
+            }
+            
+            body {
+                background-color: var(--color-background);
+            }
+            
+            .container {
+                background: var(--color-surface);
+                box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            }
+            
+            h2 {
+                color: var(--color-text);
+            }
+            
+            textarea, input, select {
+                background-color: #0d1117;
+                border-color: var(--color-border);
+                color: var(--color-text);
+            }
+            
+            textarea::placeholder {
+                color: var(--color-text-muted);
+            }
+            
+            /* Settings Panel Dark Mode */
+            .settings-panel {
+                background: #21262d;
+            }
+            
+            .settings-title {
+                color: var(--color-text);
+            }
+            
+            .settings-preview {
+                color: var(--color-text-muted);
+            }
+            
+            .settings-hint {
+                color: var(--color-text-muted);
+            }
+            
+            .settings-content {
+                background: #21262d;
+            }
+            
+            /* Segmented Control Dark Mode */
+            .segmented-control {
+                background: #30363d;
+            }
+            
+            .segmented-control .segment-indicator {
+                background: var(--color-surface);
+                box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            }
+            
+            .segmented-control .segment {
+                color: var(--color-text-secondary);
+            }
+            
+            .segmented-control .segment:hover {
+                color: var(--color-text);
+            }
+            
+            .segmented-control .segment.active {
+                color: var(--color-text);
+            }
+            
+            /* Mode Tabs Dark Mode */
+            .mode-tabs, .lang-tabs {
+                background: #30363d;
+            }
+            
+            .tab-indicator {
+                background: var(--color-surface);
+                box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+            }
+            
+            .mode-tab, .lang-tab {
+                color: var(--color-text-secondary);
+            }
+            
+            .mode-tab:hover, .lang-tab:hover {
+                color: var(--color-text);
+            }
+            
+            .mode-tab.active, .lang-tab.active {
+                color: var(--color-text);
+            }
+            
+            /* Player Controls Dark Mode */
+            .player-controls-wrapper {
+                background: var(--color-surface);
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+            }
+            
+            .player-progress {
+                border-bottom-color: #30363d;
+            }
+            
+            .progress-bar-inline {
+                background: #30363d;
+            }
+            
+            .player-status {
+                color: var(--color-text-muted);
+            }
+            
+            .status-lang {
+                background: #30363d;
+                color: var(--color-text-secondary);
+            }
+            
+            .status-reading {
+                color: var(--color-primary);
+            }
+            
+            /* Keyboard Hint Dark Mode */
+            .keyboard-hint {
+                background: #21262d;
+                border-top-color: #30363d;
+                color: var(--color-text-muted);
+            }
+            
+            .keyboard-hint kbd {
+                background: #30363d;
+                border-color: #484f58;
+                box-shadow: 0 1px 0 #484f58;
+                color: var(--color-text);
+            }
+            
+            /* iOS Hint Dark Mode */
+            .ios-hint-details {
+                background: #3d2e00;
+                border-color: #9e6a03;
+                color: #d29922;
+            }
+            
+            .ios-hint-summary {
+                color: #d29922;
+            }
+            
+            .ios-hint-title {
+                color: #d29922;
+            }
+            
+            .ios-hint-arrow {
+                color: #d29922;
+            }
+            
+            .ios-hint-content {
+                border-top-color: rgba(158, 106, 3, 0.3);
+                color: #d29922;
+            }
+            
+            /* Debug Section Dark Mode */
+            .debug-section summary {
+                color: var(--color-text-muted);
+            }
+            
+            #voiceDebug {
+                background: #21262d;
+                color: var(--color-text);
+            }
+            
+            /* Error Toast Dark Mode */
+            .error-toast {
+                background: var(--color-danger);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            }
+            
+            /* Skip Link Dark Mode */
+            .skip-link {
+                background: var(--color-primary);
+            }
+            
+            .skip-link:focus {
+                outline-color: var(--color-primary-dark);
+            }
+            
+            /* Focus Styles Dark Mode */
+            :focus-visible {
+                outline-color: var(--color-primary);
+            }
+            
+            button:focus-visible,
+            input:focus-visible,
+            select:focus-visible,
+            textarea:focus-visible {
+                outline-color: var(--color-primary);
+                box-shadow: 0 0 0 4px rgba(52, 208, 88, 0.2);
+            }
+        }
     </style>
 </head>
 <body>
 
+<a href="#main-content" class="skip-link">跳至主要內容</a>
+
 <div class="container">
     <!-- Main Content Area -->
-    <div class="main-content">
+    <div class="main-content" id="main-content">
         <h2>默書神器</h2>
         
         <!-- Language Tabs -->
@@ -603,9 +1064,12 @@
         <div class="controls voice-control">
             <div>
                 <label for="voiceSelect">選擇聲音：</label>
-                <select id="voiceSelect">
-                    <option value="auto">自動</option>
-                </select>
+                <div class="select-wrapper">
+                    <select id="voiceSelect">
+                        <option value="auto">自動</option>
+                    </select>
+                    <div id="voiceLoading" class="loading-spinner" aria-hidden="true"></div>
+                </div>
             </div>
         </div>
 
@@ -763,7 +1227,7 @@
 <div class="player-controls-wrapper">
     <div class="player-progress">
         <div class="progress-row">
-            <div class="progress-bar-inline">
+            <div class="progress-bar-inline" id="progressBar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="朗讀進度">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
         </div>
@@ -771,10 +1235,10 @@
     <div class="player-status">
         <span class="status-info">
             <span class="status-lang" id="statusLang">粵語</span>
-            <span id="statusCount">詞語 0 個</span>
+            <span id="statusCount" aria-live="polite">詞語 0 個</span>
         </span>
-        <span class="status-reading" id="statusReading"></span>
-        <span class="status-waiting" id="statusWaiting"></span>
+        <span class="status-reading" id="statusReading" aria-live="polite" aria-atomic="true"></span>
+        <span class="status-waiting" id="statusWaiting" aria-live="polite"></span>
     </div>
     <div class="player-controls" role="group" aria-label="播放控制">
         <button id="startBtn" onclick="startReading()" aria-label="開始朗讀">
@@ -791,6 +1255,9 @@
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
     </button>
     </div>
+    <div class="keyboard-hint" aria-hidden="true">
+        快捷鍵：<kbd>Space</kbd> 開始/暫停 · <kbd>Esc</kbd> 停止
+    </div>
 </div>
 
 <script>
@@ -806,6 +1273,9 @@
     let availableVoices = [];
     let wasInterrupted = false;  // 標記是否在朗讀中被中斷
     let skipNextWait = false;    // 標記是否跳過下一次等待
+    
+    // 檢測用戶是否偏好減少動畫
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // Progress state
     let progressState = {
@@ -830,6 +1300,12 @@
         const progressFill = document.getElementById('progressFill');
         if (!progressFill) return;
         
+        // 如果用戶偏好減少動畫，直接設定最終值
+        if (prefersReducedMotion) {
+            progressFill.style.width = targetPercent + '%';
+            return;
+        }
+        
         const startPercent = parseFloat(progressFill.style.width) || 0;
         let startTime = performance.now();
         let pausedTime = 0;
@@ -847,7 +1323,7 @@
                     pausedTime = currentTime - startTime;
                     wasPaused = true;
                 }
-                // 暫停時繼續監聽，但不更新進度
+                // 暫停時繼續監聯，但不更新進度
                 progressState.animationId = requestAnimationFrame(animate);
                 return;
             }
@@ -880,6 +1356,12 @@
         
         const progressFill = document.getElementById('progressFill');
         if (!progressFill) return;
+        
+        // 如果用戶偏好減少動畫，直接設定最終值
+        if (prefersReducedMotion) {
+            progressFill.style.width = endPercent + '%';
+            return;
+        }
         
         // 設定起始位置
         progressFill.style.width = startPercent + '%';
@@ -927,12 +1409,22 @@
         progressState.animationId = requestAnimationFrame(animate);
     }
 
+    // 更新進度條 ARIA 屬性
+    function updateProgressBarAria(current, total) {
+        const progressBar = document.getElementById('progressBar');
+        if (!progressBar) return;
+        const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
+        progressBar.setAttribute('aria-valuenow', percentage);
+        progressBar.setAttribute('aria-valuetext', `已完成 ${current} / ${total}`);
+    }
+
     // Update progress bar and text
     function updateProgress(current, total, duration = 0) {
         if (total <= 0) {
             stopProgressAnimation();
             const progressFill = document.getElementById('progressFill');
             if (progressFill) progressFill.style.width = '0%';
+            updateProgressBarAria(0, 0);
             return;
         }
         const safeIndex = Math.max(0, Math.min(current, total));
@@ -949,6 +1441,9 @@
                 progressFill.style.width = percentage + '%';
             }
         }
+        
+        // 更新 ARIA 屬性
+        updateProgressBarAria(safeIndex, total);
         
         // 更新狀態列的進度顯示
         const mode = document.querySelector('input[name="mode"]:checked').value;
@@ -1789,6 +2284,155 @@
     }
     
     document.addEventListener('DOMContentLoaded', initHapticFeedback);
+    
+    // ==================== 鍵盤快捷鍵 (Keyboard Shortcuts) ====================
+    // Requirements 6.1, 6.2, 6.3, 6.4
+    
+    /**
+     * 初始化鍵盤快捷鍵
+     */
+    function initKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // 檢查焦點是否在輸入元素上
+            const activeElement = document.activeElement;
+            const isInputFocused = activeElement && (
+                activeElement.tagName === 'TEXTAREA' ||
+                activeElement.tagName === 'INPUT' ||
+                activeElement.isContentEditable
+            );
+            
+            // Space 鍵：開始/暫停（排除輸入框焦點）
+            if (e.code === 'Space' && !isInputFocused) {
+                e.preventDefault();
+                const startBtn = document.getElementById('startBtn');
+                const pauseBtn = document.getElementById('pauseBtn');
+                
+                if (!startBtn.disabled) {
+                    // 未開始，點擊開始
+                    startReading();
+                } else if (!pauseBtn.disabled) {
+                    // 已開始，切換暫停/恢復
+                    togglePause();
+                }
+            }
+            
+            // Escape 鍵：停止
+            if (e.code === 'Escape') {
+                const stopBtn = document.getElementById('stopBtn');
+                if (!stopBtn.disabled) {
+                    stopReading();
+                }
+            }
+        });
+    }
+    
+    document.addEventListener('DOMContentLoaded', initKeyboardShortcuts);
+    
+    // ==================== 錯誤處理 (Error Handling) ====================
+    // Requirements 8.1, 8.2, 8.3, 8.4
+    
+    /**
+     * 顯示錯誤 Toast 訊息
+     * @param {string} message - 錯誤訊息
+     */
+    function showErrorToast(message) {
+        // 移除任何現有的 toast
+        const existingToast = document.querySelector('.error-toast');
+        if (existingToast) {
+            existingToast.remove();
+        }
+        
+        const toast = document.createElement('div');
+        toast.className = 'error-toast';
+        toast.setAttribute('role', 'alert');
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        // 3 秒後自動移除
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 3000);
+    }
+    
+    // ==================== 輸入驗證與 XSS 防護 ====================
+    // Requirements 9.1, 9.2, 9.3
+    
+    /**
+     * 清理用戶輸入，移除潛在的 HTML 標籤
+     * @param {string} text - 用戶輸入的文字
+     * @returns {string} 清理後的純文字
+     */
+    function sanitizeInput(text) {
+        if (!text || typeof text !== 'string') return '';
+        // 使用 DOM 解析來安全地提取純文字內容
+        const div = document.createElement('div');
+        div.innerHTML = text;
+        return div.textContent || div.innerText || '';
+    }
+    
+    // ==================== 記憶體管理 (Memory Management) ====================
+    // Requirements 11.1, 11.2, 11.3, 11.4
+    
+    /**
+     * 清理所有資源
+     */
+    function cleanup() {
+        // 停止進度條動畫
+        stopProgressAnimation();
+        
+        // 清除所有計時器
+        if (window.currentTimer) {
+            clearInterval(window.currentTimer);
+            window.currentTimer = null;
+        }
+        
+        // 取消語音合成
+        if (synth) {
+            synth.cancel();
+        }
+        
+        // 重置狀態變數
+        isStopped = true;
+        isPaused = false;
+        isSpeaking = false;
+    }
+    
+    // 頁面卸載時清理資源
+    window.addEventListener('beforeunload', cleanup);
+    
+    // 頁面隱藏時暫停朗讀
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden && isSpeaking && !isPaused) {
+            // 頁面隱藏且正在朗讀時，暫停朗讀
+            togglePause();
+        }
+    });
+
+    // ==================== 防抖處理 (Debounce) ====================
+    // Requirements 14.1, 14.2, 14.3
+    
+    /**
+     * 通用防抖函數
+     * @param {Function} func - 要防抖的函數
+     * @param {number} wait - 等待時間（毫秒）
+     * @returns {Function} 防抖後的函數
+     */
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func.apply(this, args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    // 創建防抖版本的 saveSettings（500ms 延遲）
+    const debouncedSaveSettings = debounce(saveSettings, 500);
 
     // ==================== 滑動手勢支援 ====================
     
@@ -1885,12 +2529,25 @@
     const maxVoiceRetries = 10;
     
     function loadVoices() {
+        const loadingSpinner = document.getElementById('voiceLoading');
+        
+        // 顯示載入指示器
+        if (loadingSpinner) {
+            loadingSpinner.setAttribute('aria-hidden', 'false');
+        }
+        
         availableVoices = synth.getVoices();
         if (availableVoices.length === 0 && voiceLoadRetries < maxVoiceRetries) {
             voiceLoadRetries++;
             setTimeout(loadVoices, 200);
             return;
         }
+        
+        // 隱藏載入指示器
+        if (loadingSpinner) {
+            loadingSpinner.setAttribute('aria-hidden', 'true');
+        }
+        
         updateVoiceOptions();
     }
 
@@ -2129,7 +2786,7 @@
             textarea.addEventListener('input', updateWordCounter);
             textarea.addEventListener('input', function() {
                 autoExpandTextarea(this);
-                saveSettings(); // 儲存 textarea 內容
+                debouncedSaveSettings(); // 使用防抖版本儲存 textarea 內容
             });
             // Initialize textarea height on page load
             autoExpandTextarea(textarea);
@@ -2333,11 +2990,20 @@
 
     async function startReading() {
         const mode = document.querySelector('input[name="mode"]:checked').value;
-        const text = document.getElementById('words').value;
+        const rawText = document.getElementById('words').value;
+        const text = sanitizeInput(rawText); // XSS 防護
         const lang = document.getElementById('langSelect').value;
         const selectedVoice = document.getElementById('voiceSelect').value;
         
-        if (text.trim() === '') return alert("請輸入內容");
+        // 空狀態處理 - Requirements 15.1, 15.2, 15.3, 15.4
+        if (text.trim() === '') {
+            updateStatus('請先輸入內容', '');
+            const textarea = document.getElementById('words');
+            textarea.focus();
+            textarea.classList.add('input-error');
+            setTimeout(() => textarea.classList.remove('input-error'), 2000);
+            return;
+        }
 
         isStopped = false;
         isPaused = false;
@@ -2359,6 +3025,8 @@
         } catch (error) {
             console.error('朗讀過程發生錯誤:', error);
             updateStatus('發生錯誤，請重試', '');
+            showErrorToast('語音功能暫時無法使用，請檢查瀏覽器設定');
+            resetButtons();
         }
         resetButtons();
     }
