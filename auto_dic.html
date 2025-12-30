@@ -3403,7 +3403,7 @@
     // ===== 文章分割模組 (Requirements 4.1, 4.2, 4.3, 4.4) =====
     
     // 標點符號正則表達式 - 匹配中英文標點符號
-    const PUNCTUATION_PATTERN = /[。！？；，、．.!?;,：:「」\u201C\u201D\u2018\u2019（）\(\)—–\u2026－\-]/;
+    const PUNCTUATION_PATTERN = /[。！？；，、．.!?;,：:「」\u201C\u201D\u2018\u2019（）\(\)—–\u2026－\-《》·]/;
     
     /**
      * 將文章在標點符號「前」分割成 segments
@@ -3482,10 +3482,10 @@
         '；': '分號',
         '：': '冒號',
         '、': '頓號',
-        '\u201C': '左引號',    // " (left double quotation mark)
-        '\u201D': '右引號',    // " (right double quotation mark)
-        '\u2018': '左單引號',  // ' (left single quotation mark)
-        '\u2019': '右單引號',  // ' (right single quotation mark)
+        '\u201C': '開引號',    // " (left double quotation mark)
+        '\u201D': '關引號',    // " (right double quotation mark)
+        '\u2018': '開單引號',  // ' (left single quotation mark)
+        '\u2019': '關單引號',  // ' (right single quotation mark)
         '「': '開引號',
         '」': '關引號',
         '『': '開雙引號',
@@ -3496,11 +3496,14 @@
         ')': '關括號',
         '【': '開方括號',
         '】': '關方括號',
+        '《': '開書名號',
+        '》': '關書名號',
         '—': '破折號',
         '——': '破折號',
         '–': '破折號',
         '\u2026': '省略號',      // … (single ellipsis)
         '\u2026\u2026': '省略號', // …… (double ellipsis)
+        '·': '間隔號',
         '．': '句號'
     };
     
@@ -3565,7 +3568,7 @@
     // 分割文章為句子（在標點符號和引號處分割）
     function splitIntoSentences(text) {
         // 包含所有需要分割的標點符號，包括引號和省略號
-        const punctuationPattern = /([。！？；，、．.!?;,：:「」""''（）\(\)……—－\-–])/g;
+        const punctuationPattern = /([。！？；，、．.!?;,：:「」""''（）\(\)……—－\-–《》·])/g;
         const parts = text.split(punctuationPattern).filter(s => s !== '');
         
         const sentences = [];
@@ -3575,7 +3578,7 @@
             const part = parts[i];
             
             // 檢查是否為標點符號
-            if (/^[。！？；，、．.!?;,：:「」""''（）\(\)……—－\-–]$/.test(part)) {
+            if (/^[。！？；，、．.!?;,：:「」""''（）\(\)……—－\-–《》·]$/.test(part)) {
                 // 將標點符號加到當前句子
                 currentSentence += part;
                 
@@ -4066,7 +4069,10 @@
                 .replace(/（/g, pauseMarkZh + ' 左括號 ')
                 .replace(/）/g, pauseMarkZh + ' 右括號 ')
                 .replace(/\(/g, pauseMarkZh + ' 左括號 ')
-                .replace(/\)/g, pauseMarkZh + ' 右括號 ');
+                .replace(/\)/g, pauseMarkZh + ' 右括號 ')
+                .replace(/《/g, pauseMarkZh + ' 開書名號 ')
+                .replace(/》/g, pauseMarkZh + ' 關書名號 ')
+                .replace(/·/g, pauseMarkZh + ' 間隔號 ');
         }
     }
 
