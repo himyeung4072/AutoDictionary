@@ -1173,23 +1173,10 @@
             margin-bottom: 4px;
         }
         
-        /* Article mode: punctuation segments - slightly smaller and different color */
-        .text-display-container.article-mode .punct-segment {
-            color: #6b7280;
-            font-size: 0.95em;
-        }
-        
         /* Active highlight state - Light Mode */
         .highlight-item.active {
             background-color: #fff3cd;
             box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.5);
-        }
-        
-        /* Active punctuation highlight - Light Mode */
-        .highlight-item.punct-segment.active {
-            background-color: #fef3c7;
-            box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.5);
-            color: #92400e;
         }
         
         /* Dark Mode: Text Display Container */
@@ -1200,23 +1187,11 @@
                 color: var(--color-text);
             }
             
-            /* Dark Mode: Punctuation segments */
-            .text-display-container.article-mode .punct-segment {
-                color: #9ca3af;
-            }
-            
             /* Dark Mode: Active highlight - Neon Purple glow */
             .highlight-item.active {
                 background-color: rgba(139, 92, 246, 0.3);
                 box-shadow: 0 0 8px rgba(139, 92, 246, 0.5), 0 0 0 2px rgba(139, 92, 246, 0.4);
                 color: #e9d5ff;
-            }
-            
-            /* Dark Mode: Active punctuation highlight */
-            .highlight-item.punct-segment.active {
-                background-color: rgba(251, 191, 36, 0.2);
-                box-shadow: 0 0 8px rgba(251, 191, 36, 0.4), 0 0 0 2px rgba(251, 191, 36, 0.3);
-                color: #fcd34d;
             }
         }
         
@@ -1358,16 +1333,6 @@
 
                 <!-- Article Mode Controls -->
                 <div id="articleControls" class="hidden">
-                    <!-- Punctuation Reading Toggle: Segmented Control -->
-                    <div class="settings-control-group">
-                        <label>朗讀標點符號：</label>
-                        <div class="segmented-control" id="punctuationReadingSegments" role="radiogroup" aria-label="朗讀標點符號">
-                            <button class="segment active" data-value="true" role="radio" aria-checked="true">開</button>
-                            <button class="segment" data-value="false" role="radio" aria-checked="false">關</button>
-                        </div>
-                        <input type="hidden" id="punctuationReadingEnabled" value="true">
-                    </div>
-                    
                     <!-- Speed: Segmented Control -->
                     <div class="settings-control-group">
                         <label>朗讀速度：</label>
@@ -1497,15 +1462,13 @@
 
     // ===== HighlightManager 模組 =====
     // 負責管理文字顯示和高亮狀態
-    // 支援新的 segment 結構（文字和標點符號）
     const HighlightManager = {
         // 狀態
         isDisplayMode: false,
         currentHighlightIndex: -1,
         displayContainer: null,
         originalTextarea: null,
-        items: [],        // 儲存分割後的項目（詞語模式為字串陣列，文章模式為 segment 陣列）
-        segments: [],     // 儲存原始 segment 結構（僅文章模式使用）
+        items: [],
         mode: 'word',
 
         // 初始化顯示容器
@@ -1519,16 +1482,13 @@
         },
 
         // 根據模式分割文字
-        // 詞語模式：返回字串陣列
-        // 文章模式：返回 segment 陣列 [{type: 'text'|'punct', content: string}]
         splitText(text, mode) {
             if (mode === 'word') {
                 // 詞語模式：按行分割，過濾空行
                 return text.split('\n').map(s => s.trim()).filter(s => s !== '');
             } else {
-                // 文章模式：使用新的 splitArticleSegments 函數
-                // 返回所有 segments（包含文字和標點符號）用於高亮顯示
-                return splitArticleSegments(text);
+                // 文章模式：使用現有的 splitIntoSentences 函數
+                return splitIntoSentences(text);
             }
         },
 
@@ -1537,23 +1497,12 @@
             if (!this.init()) return false;
             
             // 分割文字
-            const splitResult = this.splitText(text, mode);
-            if (splitResult.length === 0) return false;
+            this.items = this.splitText(text, mode);
+            if (this.items.length === 0) return false;
             
             this.mode = mode;
             this.isDisplayMode = true;
             this.currentHighlightIndex = -1;
-            
-            // 根據模式處理分割結果
-            if (mode === 'word') {
-                // 詞語模式：items 為字串陣列
-                this.items = splitResult;
-                this.segments = [];
-            } else {
-                // 文章模式：items 為 segment 陣列
-                this.segments = splitResult;
-                this.items = splitResult.map(s => s.content);
-            }
             
             // 隱藏 textarea
             this.originalTextarea.classList.add('hidden');
@@ -1577,27 +1526,13 @@
             
             // 清空並建立高亮項目
             this.displayContainer.innerHTML = '';
-            
-            if (mode === 'word') {
-                // 詞語模式：每個項目為一行
-                this.items.forEach((item, index) => {
-                    const span = document.createElement('span');
-                    span.className = 'highlight-item';
-                    span.setAttribute('data-index', index);
-                    span.textContent = item;
-                    this.displayContainer.appendChild(span);
-                });
-            } else {
-                // 文章模式：根據 segment 類型設定不同樣式
-                this.segments.forEach((segment, index) => {
-                    const span = document.createElement('span');
-                    span.className = `highlight-item ${segment.type === 'punct' ? 'punct-segment' : 'text-segment'}`;
-                    span.setAttribute('data-index', index);
-                    span.setAttribute('data-type', segment.type);
-                    span.textContent = segment.content;
-                    this.displayContainer.appendChild(span);
-                });
-            }
+            this.items.forEach((item, index) => {
+                const span = document.createElement('span');
+                span.className = 'highlight-item';
+                span.setAttribute('data-index', index);
+                span.textContent = item;
+                this.displayContainer.appendChild(span);
+            });
             
             // 顯示容器
             this.displayContainer.classList.remove('hidden');
@@ -1610,7 +1545,6 @@
             this.isDisplayMode = false;
             this.currentHighlightIndex = -1;
             this.items = [];
-            this.segments = [];  // 重置 segments 陣列
             
             // 隱藏 displayContainer
             if (this.displayContainer) {
@@ -1624,15 +1558,9 @@
         },
 
         // 高亮指定索引的項目
-        // 支援文章模式的 segment 結構（文字和標點符號）
         highlightItem(index) {
             if (!this.isDisplayMode || !this.displayContainer) return;
-            
-            // 根據模式檢查索引範圍
-            const maxIndex = this.mode === 'article' && this.segments.length > 0 
-                ? this.segments.length 
-                : this.items.length;
-            if (index < 0 || index >= maxIndex) return;
+            if (index < 0 || index >= this.items.length) return;
             
             // 移除前一個高亮
             this.clearHighlight();
@@ -2103,8 +2031,6 @@
         initSegmentedControl('articleSpeedSegments', 'speechRate', onSettingChange);
         initSegmentedControl('sentenceRepeatSegments', 'sentenceRepeat', onSettingChange);
         initSegmentedControl('charWaitTimeSegments', 'charWaitTime', onSettingChange);
-        // 標點符號朗讀開關 (Requirements 1.1, 1.5)
-        initSegmentedControl('punctuationReadingSegments', 'punctuationReadingEnabled', onSettingChange);
     }
 
     // Generate settings preview text based on current settings
@@ -2311,8 +2237,6 @@
             speechRate: document.getElementById('speechRate').value,
             sentenceRepeat: document.getElementById('sentenceRepeat').value,
             charWaitTime: document.getElementById('charWaitTime').value,
-            // 標點符號朗讀開關 (Requirements 1.1, 1.4, 1.5)
-            punctuationReadingEnabled: document.getElementById('punctuationReadingEnabled').value === 'true',
             // New settings for panel state and debug visibility (Requirements 4.6, 8.4)
             settingsPanelOpen: settingsPanel ? settingsPanel.open : true,
             debugVisible: debugSection ? (debugSection.style.display !== 'none') : false,
@@ -2403,12 +2327,6 @@
                 document.getElementById('charWaitTime').value = settings.charWaitTime;
                 updateSegmentedControl('charWaitTimeSegments', settings.charWaitTime);
             }
-            
-            // 載入標點符號朗讀開關設定 (Requirements 1.4, 1.5)
-            // 預設為 true（開啟）
-            const punctuationEnabled = settings.punctuationReadingEnabled !== undefined ? settings.punctuationReadingEnabled : true;
-            document.getElementById('punctuationReadingEnabled').value = punctuationEnabled.toString();
-            updateSegmentedControl('punctuationReadingSegments', punctuationEnabled.toString());
             
             // Load settings panel state (Requirement 4.6)
             if (settings.settingsPanelOpen !== undefined) {
@@ -3400,172 +3318,10 @@
         });
     }
 
-    // ===== 文章分割模組 (Requirements 4.1, 4.2, 4.3, 4.4) =====
-    
-    // 標點符號正則表達式 - 匹配中英文標點符號
-    const PUNCTUATION_PATTERN = /[。！？；，、．.!?;,：:「」\u201C\u201D\u2018\u2019（）\(\)—–\u2026－\-]/;
-    
-    /**
-     * 將文章在標點符號「前」分割成 segments
-     * Requirements: 4.1, 4.2, 4.3, 4.4
-     * @param {string} text - 要分割的文章文字
-     * @returns {Array<{type: 'text'|'punct', content: string}>} - 分割後的 segments 陣列
-     */
-    function splitArticleSegments(text) {
-        // Handle edge cases
-        if (text === null || text === undefined) {
-            return [];
-        }
-        
-        if (typeof text !== 'string') {
-            text = String(text);
-        }
-        
-        if (text === '') {
-            return [];
-        }
-        
-        const segments = [];
-        let currentText = '';
-        let currentPunct = '';
-        
-        for (let i = 0; i < text.length; i++) {
-            const char = text[i];
-            
-            if (PUNCTUATION_PATTERN.test(char)) {
-                // If we have accumulated text, add it as a text segment
-                if (currentText.length > 0) {
-                    segments.push({ type: 'text', content: currentText });
-                    currentText = '';
-                }
-                
-                // 合併連續的相同標點符號（如 …… 或 ——）
-                if (currentPunct.length > 0 && currentPunct[0] === char) {
-                    currentPunct += char;
-                } else {
-                    // 不同的標點符號，先保存之前的
-                    if (currentPunct.length > 0) {
-                        segments.push({ type: 'punct', content: currentPunct });
-                    }
-                    currentPunct = char;
-                }
-            } else {
-                // 先保存之前累積的標點符號
-                if (currentPunct.length > 0) {
-                    segments.push({ type: 'punct', content: currentPunct });
-                    currentPunct = '';
-                }
-                // Accumulate non-punctuation characters
-                currentText += char;
-            }
-        }
-        
-        // Don't forget any remaining text or punctuation at the end
-        if (currentPunct.length > 0) {
-            segments.push({ type: 'punct', content: currentPunct });
-        }
-        if (currentText.length > 0) {
-            segments.push({ type: 'text', content: currentText });
-        }
-        
-        return segments;
-    }
-    
-    // ===== 標點符號名稱轉換模組 (Requirements 6.4, 7.1, 7.3, 8.1) =====
-    
-    // 中文標點符號對照表
-    const CHINESE_PUNCTUATION_MAP = {
-        '，': '逗號',
-        '。': '句號',
-        '！': '感嘆號',
-        '？': '問號',
-        '；': '分號',
-        '：': '冒號',
-        '、': '頓號',
-        '\u201C': '左引號',    // " (left double quotation mark)
-        '\u201D': '右引號',    // " (right double quotation mark)
-        '\u2018': '左單引號',  // ' (left single quotation mark)
-        '\u2019': '右單引號',  // ' (right single quotation mark)
-        '「': '開引號',
-        '」': '關引號',
-        '『': '開雙引號',
-        '』': '關雙引號',
-        '（': '開括號',
-        '）': '關括號',
-        '(': '開括號',
-        ')': '關括號',
-        '【': '開方括號',
-        '】': '關方括號',
-        '—': '破折號',
-        '——': '破折號',
-        '–': '破折號',
-        '\u2026': '省略號',      // … (single ellipsis)
-        '\u2026\u2026': '省略號', // …… (double ellipsis)
-        '．': '句號'
-    };
-    
-    // 英文標點符號對照表
-    const ENGLISH_PUNCTUATION_MAP = {
-        ',': 'comma',
-        '.': 'full stop',
-        '!': 'exclamation mark',
-        '?': 'question mark',
-        ';': 'semicolon',
-        ':': 'colon',
-        '—': 'dash',
-        '–': 'dash',
-        '\u201C': 'open quote',   // " (left double quotation mark)
-        '\u201D': 'close quote',  // " (right double quotation mark)
-        '\u2018': 'open quote',   // ' (left single quotation mark)
-        '\u2019': 'close quote',  // ' (right single quotation mark)
-        '(': 'open parenthesis',
-        ')': 'close parenthesis',
-        '（': 'open parenthesis',
-        '）': 'close parenthesis',
-        '[': 'open bracket',
-        ']': 'close bracket',
-        '{': 'open brace',
-        '}': 'close brace',
-        '...': 'ellipsis',
-        '-': 'hyphen'
-    };
-    
-    /**
-     * 取得標點符號的朗讀名稱
-     * Requirements: 6.4, 7.1, 8.1
-     * @param {string} punct - 標點符號
-     * @param {string} lang - 語言代碼
-     * @returns {string} - 標點符號的朗讀名稱
-     */
-    function getPunctuationName(punct, lang) {
-        // Handle edge cases
-        if (punct === null || punct === undefined || punct === '') {
-            return '';
-        }
-        
-        if (typeof punct !== 'string') {
-            punct = String(punct);
-        }
-        
-        // Normalize language code to lowercase
-        const normalizedLang = (lang || '').toLowerCase();
-        
-        // Select the appropriate map based on language
-        const isChinese = normalizedLang.startsWith('zh') || normalizedLang === 'chinese';
-        
-        if (isChinese) {
-            return CHINESE_PUNCTUATION_MAP[punct] || punct;
-        } else {
-            return ENGLISH_PUNCTUATION_MAP[punct] || punct;
-        }
-    }
-    
-    // ===== 舊版分割函數（保留向後兼容）=====
-    
     // 分割文章為句子（在標點符號和引號處分割）
     function splitIntoSentences(text) {
-        // 包含所有需要分割的標點符號，包括引號和省略號
-        const punctuationPattern = /([。！？；，、．.!?;,：:「」""''（）\(\)……—－\-–])/g;
+        // 包含所有需要分割的標點符號，包括引號
+        const punctuationPattern = /([。！？；，、．.!?;,：:「」""''（）\(\)])/g;
         const parts = text.split(punctuationPattern).filter(s => s !== '');
         
         const sentences = [];
@@ -3575,7 +3331,7 @@
             const part = parts[i];
             
             // 檢查是否為標點符號
-            if (/^[。！？；，、．.!?;,：:「」""''（）\(\)……—－\-–]$/.test(part)) {
+            if (/^[。！？；，、．.!?;,：:「」""''（）\(\)]$/.test(part)) {
                 // 將標點符號加到當前句子
                 currentSentence += part;
                 
@@ -3777,145 +3533,83 @@
         if (progressFill) progressFill.style.width = '100%';
     }
 
-    /**
-     * 文章朗讀函數 - 使用新的 segment 分割邏輯
-     * 
-     * Requirements:
-     * - 4.1: 使用 splitArticleSegments() 在標點符號前分割
-     * - 5.1: 朗讀順序：文字段落 → 停頓 → 標點符號 → 停頓 → 下一段
-     * - 5.2, 5.3: 文字段落和標點符號朗讀後都加入停頓
-     * - 5.4: 連續標點符號之間加入停頓
-     * - 6.1: 標點符號只讀 1 次（不受重讀次數影響）
-     * - 6.2, 6.3: 文字段落可重複 N 次
-     */
     async function readArticle(text, lang, selectedVoice) {
         const speechRate = parseFloat(document.getElementById('speechRate').value) || 0.9;
         const sentenceRepeat = Math.max(1, parseInt(document.getElementById('sentenceRepeat').value) || 1);
         
-        // 取得標點符號朗讀設定 (Requirements 1.2, 1.3)
-        const punctuationReadingEnabled = document.getElementById('punctuationReadingEnabled').value === 'true';
-        
-        // 使用新的分割邏輯 (Requirements 4.1, 4.2, 4.3, 4.4)
-        const segments = splitArticleSegments(text);
-        if (segments.length === 0) return;
-        
-        // 計算總時間用於進度條
-        // 文字段落：根據字數計算等待時間 × 重複次數
-        // 標點符號：固定短時間（約 500ms）
-        const PUNCT_WAIT_TIME = 500; // 標點符號等待時間（毫秒）
-        
-        const segmentTimes = segments.map(segment => {
-            if (segment.type === 'text') {
-                const waitTime = calculateWaitTime(segment.content, lang);
-                return waitTime * sentenceRepeat;
-            } else {
-                // 標點符號只讀一次，固定時間
-                return PUNCT_WAIT_TIME;
-            }
+        const sentences = splitIntoSentences(text);
+        if (sentences.length === 0) return;
+
+        // 先計算每個句子的時間和總時間（等待時間已包含朗讀時間）
+        const sentenceTimes = sentences.map(sentence => {
+            const waitTime = calculateWaitTime(sentence, lang);
+            return waitTime; // 總時間 = 等待時間（已包含朗讀）
         });
-        const totalTime = segmentTimes.reduce((sum, t) => sum + t, 0);
+        const totalTime = sentenceTimes.reduce((sum, t) => sum + t, 0);
         
-        // 計算每個 segment 的進度區間
+        // 計算每個句子的進度區間（根據時間佔比）
         let accumulatedPercent = 0;
-        const progressRanges = segmentTimes.map(time => {
+        const progressRanges = sentenceTimes.map(time => {
             const start = accumulatedPercent;
             const percent = (time / totalTime) * 100;
             accumulatedPercent += percent;
             return { start, end: accumulatedPercent, duration: time };
         });
-        
-        // 計算文字段落數量（用於狀態顯示）
-        const textSegments = segments.filter(s => s.type === 'text');
-        let textSegmentIndex = 0;
 
-        for (let idx = 0; idx < segments.length; idx++) {
-            const segment = segments[idx];
+        for (let idx = 0; idx < sentences.length; idx++) {
+            const sentence = sentences[idx];
             if (isStopped) break;
 
             const { start, end, duration } = progressRanges[idx];
+            const totalWaitTime = calculateWaitTime(sentence, lang);
+            const waitPerRepeat = totalWaitTime / sentenceRepeat;
             
-            // 漸進式進度條
+            // 更新狀態列文字
+            const statusCount = document.getElementById('statusCount');
+            if (statusCount) {
+                statusCount.textContent = `句子 ${idx + 1}/${sentences.length} 個`;
+            }
+            
+            // 漸進式進度條：根據時間佔比分配區間
             animateProgressFromTo(start, end, duration);
             
-            // 高亮當前 segment（文字或標點符號）
-            // 使用 idx 作為索引，因為 HighlightManager 現在包含所有 segments
+            // 高亮當前句子 - Requirements 2.1, 4.4
             HighlightManager.highlightItem(idx);
-            
-            if (segment.type === 'text') {
-                // ===== 文字段落朗讀邏輯 (Requirements 5.1, 5.2, 6.2, 6.3) =====
-                textSegmentIndex++;
-                
-                // 更新狀態列文字
-                const statusCount = document.getElementById('statusCount');
-                if (statusCount) {
-                    statusCount.textContent = `段落 ${textSegmentIndex}/${textSegments.length} 個`;
-                }
-                
-                const totalWaitTime = calculateWaitTime(segment.content, lang);
-                const waitPerRepeat = totalWaitTime / sentenceRepeat;
-                
-                // 文字段落可重複 N 次 (Requirements 6.2, 6.3)
-                for (let i = 1; i <= sentenceRepeat; i++) {
-                    if (isStopped) break;
 
-                    const repeatStartTime = Date.now();
-                    const countdownTimer = startCountdown(waitPerRepeat, repeatStartTime);
+            for (let i = 1; i <= sentenceRepeat; i++) {
+                if (isStopped) break;
 
-                    // 如果上一次被中斷，需要重新朗讀
-                    do {
-                        wasInterrupted = false;
-                        const displayText = segment.content.substring(0, 15) + (segment.content.length > 15 ? '...' : '');
-                        updateStatus(`正在朗讀：${displayText} (${i}/${sentenceRepeat})`, '');
-                        await speakPromise(segment.content, lang, selectedVoice, speechRate);
-                        
-                        // 如果被中斷，等待恢復
-                        while (isPaused && !isStopped) {
-                            await new Promise(r => setTimeout(r, 200));
-                        }
-                    } while (wasInterrupted && !isStopped);
+                // 記錄開始時間，朗讀時間包含在等待時間內
+                const repeatStartTime = Date.now();
+                
+                // 開始倒數計時（朗讀開始時就顯示）
+                const countdownTimer = startCountdown(waitPerRepeat, repeatStartTime);
+
+                // 如果上一次被中斷，需要重新朗讀
+                do {
+                    wasInterrupted = false;
+                    updateStatus(`正在朗讀：${sentence.substring(0, 15)}${sentence.length > 15 ? '...' : ''} (${i}/${sentenceRepeat})`, '');
+                    await speakPromise(sentence, lang, selectedVoice, speechRate);
                     
-                    skipNextWait = false;
-
-                    const elapsedTime = Date.now() - repeatStartTime;
-                    const remainingWait = Math.max(0, waitPerRepeat - elapsedTime);
-
-                    // 每次重複後加入停頓 (Requirements 5.2)
-                    if (!isStopped && remainingWait > 0) {
-                        await waitRemaining(remainingWait, countdownTimer);
-                    } else {
-                        clearInterval(countdownTimer);
-                        updateStatus(document.getElementById('statusReading').textContent, '');
+                    // 如果被中斷，等待恢復
+                    while (isPaused && !isStopped) {
+                        await new Promise(r => setTimeout(r, 200));
                     }
-                }
+                } while (wasInterrupted && !isStopped);
                 
-            } else {
-                // ===== 標點符號朗讀邏輯 (Requirements 5.3, 5.4, 6.1) =====
-                
-                // 標點符號只讀 1 次，不受重讀次數影響 (Requirements 6.1)
-                if (punctuationReadingEnabled) {
-                    // 取得標點符號的朗讀名稱 (Requirements 6.4, 7.1, 8.1)
-                    const punctName = getPunctuationName(segment.content, lang);
-                    
-                    updateStatus(`正在朗讀：${punctName}`, '');
-                    
-                    // 朗讀標點符號名稱
-                    do {
-                        wasInterrupted = false;
-                        await speakPromise(punctName, lang, selectedVoice, speechRate);
-                        
-                        while (isPaused && !isStopped) {
-                            await new Promise(r => setTimeout(r, 200));
-                        }
-                    } while (wasInterrupted && !isStopped);
-                }
-                
-                // 標點符號後加入停頓 (Requirements 5.3, 5.4)
-                // 連續標點符號之間也會有停頓 (Requirements 4.4, 5.4)
-                if (!isStopped) {
-                    const isLastSegment = idx === segments.length - 1;
-                    if (!isLastSegment) {
-                        await wait(PUNCT_WAIT_TIME, false);
-                    }
+                // 重讀完成後重置跳過等待標記，確保後續正常等待
+                skipNextWait = false;
+
+                // 計算剩餘等待時間（等待時間 - 已用朗讀時間）
+                const elapsedTime = Date.now() - repeatStartTime;
+                const remainingWait = Math.max(0, waitPerRepeat - elapsedTime);
+
+                // 如果還有剩餘時間且不是最後一句的最後一次，則等待
+                if (!isStopped && remainingWait > 0 && !(idx === sentences.length - 1 && i === sentenceRepeat)) {
+                    await waitRemaining(remainingWait, countdownTimer);
+                } else {
+                    clearInterval(countdownTimer);
+                    updateStatus(document.getElementById('statusReading').textContent, '');
                 }
             }
         }
@@ -4047,26 +3741,23 @@
         } else {
             // 中文標點符號轉換 - 在標點前加入停頓，讓最後一個字和標點之間有停頓感
             return text
-                .replace(/，/g, pauseMarkZh + ' 逗號 ')
-                .replace(/。/g, pauseMarkZh + ' 句號 ')
-                .replace(/！/g, pauseMarkZh + ' 感嘆號 ')
-                .replace(/？/g, pauseMarkZh + ' 問號 ')
-                .replace(/；/g, pauseMarkZh + ' 分號 ')
-                .replace(/：/g, pauseMarkZh + ' 冒號 ')
-                .replace(/、/g, pauseMarkZh + ' 頓號 ')
-                .replace(/……/g, pauseMarkZh + ' 省略號 ')
-                .replace(/—/g, pauseMarkZh + ' 破折號 ')
-                .replace(/－/g, pauseMarkZh + ' 破折號 ')
-                .replace(/"/g, pauseMarkZh + ' 左引號 ')
-                .replace(/"/g, pauseMarkZh + ' 右引號 ')
-                .replace(/'/g, pauseMarkZh + ' 左單引號 ')
-                .replace(/'/g, pauseMarkZh + ' 右單引號 ')
-                .replace(/「/g, pauseMarkZh + ' 左引號 ')
-                .replace(/」/g, pauseMarkZh + ' 右引號 ')
-                .replace(/（/g, pauseMarkZh + ' 左括號 ')
-                .replace(/）/g, pauseMarkZh + ' 右括號 ')
-                .replace(/\(/g, pauseMarkZh + ' 左括號 ')
-                .replace(/\)/g, pauseMarkZh + ' 右括號 ');
+                .replace(/，/g, pauseMark + ' 逗號 ')
+                .replace(/。/g, pauseMark + ' 句號 ')
+                .replace(/！/g, pauseMark + ' 感嘆號 ')
+                .replace(/？/g, pauseMark + ' 問號 ')
+                .replace(/；/g, pauseMark + ' 分號 ')
+                .replace(/：/g, pauseMark + ' 冒號 ')
+                .replace(/、/g, pauseMark + ' 頓號 ')
+                .replace(/"/g, pauseMark + ' 左引號 ')
+                .replace(/"/g, pauseMark + ' 右引號 ')
+                .replace(/'/g, pauseMark + ' 左單引號 ')
+                .replace(/'/g, pauseMark + ' 右單引號 ')
+                .replace(/「/g, pauseMark + ' 左引號 ')
+                .replace(/」/g, pauseMark + ' 右引號 ')
+                .replace(/（/g, pauseMark + ' 左括號 ')
+                .replace(/）/g, pauseMark + ' 右括號 ')
+                .replace(/\(/g, pauseMark + ' 左括號 ')
+                .replace(/\)/g, pauseMark + ' 右括號 ');
         }
     }
 
@@ -4104,11 +3795,8 @@
                 synth.cancel();
                 
                 setTimeout(() => {
-                    // 檢查標點符號朗讀設定 (Requirements 2.3, 2.4, 3.3, 3.4)
-                    const punctuationReadingEnabled = document.getElementById('punctuationReadingEnabled').value === 'true';
-                    
-                    // 轉換標點符號為可朗讀文字（僅在開啟時轉換）
-                    const speechText = punctuationReadingEnabled ? convertPunctuationToSpeech(text, lang) : text;
+                    // 轉換標點符號為可朗讀文字
+                    const speechText = convertPunctuationToSpeech(text, lang);
                     
                     // 創建新的 utterance
                     const utterance = new SpeechSynthesisUtterance(speechText);
