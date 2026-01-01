@@ -4455,49 +4455,6 @@
             const readingMode = document.getElementById('readingMode').value;
             
             if (!isStopped && fullReadEnabled && readingMode === 'auto') {
-                // 等待最後一個詞語/句子的書寫時間
-                // 因為 readWords/readArticle 會跳過最後一項的等待時間
-                if (mode === 'word') {
-                    const charWaitTime = Math.max(0, parseFloat(document.getElementById('interval').value) || 0);
-                    if (charWaitTime > 0) {
-                        const lines = text.split('\n').map(s => s.trim()).filter(s => s !== "");
-                        if (lines.length > 0) {
-                            const lastWord = lines[lines.length - 1];
-                            const lastWordWaitTime = calculateWordWaitTime(lastWord, lang, charWaitTime);
-                            // 扣除已經花費的朗讀時間（估算），只等待書寫時間部分
-                            const writeTimeOnly = lastWord.length * charWaitTime * 1000;
-                            if (writeTimeOnly > 0 && !isStopped) {
-                                updateStatus('書寫時間...', '');
-                                await new Promise(r => setTimeout(r, writeTimeOnly));
-                            }
-                        }
-                    }
-                } else {
-                    // 文章模式：等待最後一個句子的書寫時間
-                    const charWaitTime = Math.max(0, parseFloat(document.getElementById('charWaitTime').value) || 0);
-                    if (charWaitTime > 0) {
-                        const punctuationReadingEnabled = document.getElementById('punctuationReadingEnabled').value === 'true';
-                        const segments = splitArticleSegments(text);
-                        const textSegments = segments.filter(s => s.type === 'text');
-                        if (textSegments.length > 0) {
-                            const lastSegment = textSegments[textSegments.length - 1];
-                            const writeTimeOnly = lastSegment.content.length * charWaitTime * 1000;
-                            if (writeTimeOnly > 0 && !isStopped) {
-                                updateStatus('書寫時間...', '');
-                                await new Promise(r => setTimeout(r, writeTimeOnly));
-                            }
-                        }
-                    }
-                }
-                
-                if (isStopped) {
-                    // 如果在等待期間被停止，不繼續完整朗讀
-                    updateStatus("播放完畢", '');
-                    resetButtons();
-                    HighlightManager.switchToEditMode();
-                    return;
-                }
-                
                 // 廣播提示訊息 (Requirements 2.4, 4.1)
                 updateStatus('準備完整朗讀...', '');
                 const announcementMessage = getFullReadAnnouncementMessage(lang);
