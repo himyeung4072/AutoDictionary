@@ -140,6 +140,20 @@
         .mode-toggle input[type="radio"] { width: auto; }
         .hidden { display: none !important; }
         
+        /* 滑動動畫效果 */
+        .slide-toggle {
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out, margin 0.3s ease-out;
+            max-height: 100px;
+            opacity: 1;
+        }
+        .slide-toggle.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+        }
+        
         /* Mode Tabs Styles */
         .mode-tabs, .lang-tabs {
             display: flex;
@@ -1425,7 +1439,7 @@
                 </div>
                 
                 <!-- Full Read Feature Toggle (Requirements 1.1, 1.2) -->
-                <div class="settings-control-group" id="fullReadControlGroup">
+                <div class="settings-control-group slide-toggle" id="fullReadControlGroup">
                     <label>播放完畢後完整朗讀：</label>
                     <div class="segmented-control" id="fullReadSegments" role="radiogroup" aria-label="播放完畢後完整朗讀">
                         <button class="segment" data-value="true" role="radio" aria-checked="false">開</button>
@@ -1999,16 +2013,22 @@
     /**
      * 更新完整朗讀控制項的可見性
      * 只在自動模式下顯示 (Requirements 5.1, 5.2)
+     * 使用滑動動畫效果
      */
     function updateFullReadControlVisibility() {
         const readingMode = document.getElementById('readingMode').value;
         const fullReadControlGroup = document.getElementById('fullReadControlGroup');
         
         if (fullReadControlGroup) {
+            // 確保有 slide-toggle class
+            if (!fullReadControlGroup.classList.contains('slide-toggle')) {
+                fullReadControlGroup.classList.add('slide-toggle');
+            }
+            
             if (readingMode === 'auto') {
-                fullReadControlGroup.classList.remove('hidden');
+                fullReadControlGroup.classList.remove('collapsed');
             } else {
-                fullReadControlGroup.classList.add('hidden');
+                fullReadControlGroup.classList.add('collapsed');
             }
         }
     }
