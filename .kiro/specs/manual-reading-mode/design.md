@@ -81,7 +81,7 @@ const ManualReadingState = {
     // 是否正在朗讀中（語音合成進行中）
     isReading: false,
     
-    // 分割後的項目陣列
+    // 分割後的項目陣列（包含 type 和 content）
     items: [],
     
     // 總項目數
@@ -97,11 +97,23 @@ const ManualReadingState = {
     },
     
     // 初始化項目
-    initItems(text, mode) {
+    initItems(text, mode, punctuationReadingEnabled = true) {
         if (mode === 'word') {
-            this.items = text.split('\n').map(s => s.trim()).filter(s => s !== '');
+            // 詞語模式：按行分割，每個都是文字類型
+            this.items = text.split('\n')
+                .map(s => s.trim())
+                .filter(s => s !== '')
+                .map(s => ({ type: 'text', content: s }));
         } else {
-            this.items = splitArticleSegments(text).filter(s => s.type === 'text').map(s => s.content);
+            // 文章模式：使用 splitArticleSegments
+            const segments = splitArticleSegments(text);
+            if (punctuationReadingEnabled) {
+                // 包含標點符號
+                this.items = segments;
+            } else {
+                // 只取文字段落
+                this.items = segments.filter(s => s.type === 'text');
+            }
         }
         this.totalItems = this.items.length;
         return this.items;
@@ -339,18 +351,26 @@ async function readCurrentItem(lang, selectedVoice) {
     // 更新高亮
     HighlightManager.highlightItem(ManualReadingState.currentIndex);
     
-    // 更新狀態顯示
-    const mode = document.querySelector('input[name="mode"]:checked').value;
-    const label = mode === 'word' ? '詞語' : '句子';
-    updateStatus(`正在朗讀：${item}`, '');
-    
     // 取得語速設定
+    const mode = document.querySelector('input[name="mode"]:checked').value;
     const speechRate = mode === 'word' 
         ? parseFloat(document.getElementById('wordSpeechRate').value) || 0.9
         : parseFloat(document.getElementById('speechRate').value) || 0.9;
     
+    // 根據項目類型決定朗讀內容
+    let textToSpeak;
+    if (item.type === 'punct') {
+        // 標點符號：朗讀標點名稱
+        textToSpeak = getPunctuationName(item.content, lang);
+        updateStatus(`正在朗讀：${textToSpeak}`, '');
+    } else {
+        // 文字：直接朗讀
+        textToSpeak = item.content;
+        updateStatus(`正在朗讀：${item.content}`, '');
+    }
+    
     try {
-        await speakPromise(item, lang, selectedVoice, speechRate);
+        await speakPromise(textToSpeak, lang, selectedVoice, speechRate);
     } catch (error) {
         console.error('朗讀錯誤:', error);
     }
@@ -382,8 +402,8 @@ function updateManualButtonStates() {
     const isAtFirst = ManualReadingState.isAtFirst();
     const isAtLast = ManualReadingState.isAtLast();
     
-    // 上一個按鈕：未開始時禁用，朗讀中禁用
-    prevBtn.disabled = !hasStarted || isReading;
+    // 上一個按鈕：未開始時禁用，朗讀中禁用，第一個項目時禁用
+    prevBtn.disabled = !hasStarted || isReading || isAtFirst;
     
     // 下一個按鈕：未開始時禁用，朗讀中禁用，最後一個時禁用
     nextBtn.disabled = !hasStarted || isReading || isAtLast;
@@ -549,12 +569,12 @@ function handleManualKeyboard(e) {
 ### Property 4: Button State Consistency
 
 *For any* ManualReadingState, the button disabled states SHALL be consistent with the state:
-- prevBtn disabled when !hasStarted OR isReading
+- prevBtn disabled when !hasStarted OR isReading OR isAtFirst
 - nextBtn disabled when !hasStarted OR isReading OR isAtLast
 - manualStartBtn disabled when isReading
 - manualStopBtn disabled when !hasStarted
 
-**Validates: Requirements 3.5, 4.1, 4.4, 5.1, 6.1**
+**Validates: Requirements 3.5, 4.1, 4.4, 5.1, 5.2, 5.7, 6.1**
 
 ### Property 5: Highlight Follows Index
 
@@ -600,6 +620,18 @@ function handleManualKeyboard(e) {
 - edit mode active (textarea visible)
 
 **Validates: Requirements 6.2, 6.3, 6.4, 6.5**
+
+### Property 11: Punctuation Segments Included When Enabled
+
+*For any* article text with punctuation marks, when punctuation reading is enabled, the items array SHALL include both text and punctuation segments in the correct order.
+
+**Validates: Requirements 10.1, 10.3, 10.5**
+
+### Property 12: Punctuation Segments Skipped When Disabled
+
+*For any* article text with punctuation marks, when punctuation reading is disabled, the items array SHALL only include text segments (no punctuation).
+
+**Validates: Requirements 10.4**
 
 ## Error Handling
 

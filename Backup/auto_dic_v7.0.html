@@ -1664,7 +1664,7 @@
         },
 
         // 切換到顯示模式（朗讀開始時）
-        switchToDisplayMode(text, mode, punctuationReadingEnabled = true) {
+        switchToDisplayMode(text, mode) {
             if (!this.init()) return false;
             
             // 分割文字
@@ -1681,13 +1681,9 @@
                 this.items = splitResult;
                 this.segments = [];
             } else {
-                // 文章模式：根據標點符號設定過濾 segments
-                if (punctuationReadingEnabled) {
-                    this.segments = splitResult;
-                } else {
-                    this.segments = splitResult.filter(s => s.type === 'text');
-                }
-                this.items = this.segments.map(s => s.content);
+                // 文章模式：items 為 segment 陣列
+                this.segments = splitResult;
+                this.items = splitResult.map(s => s.content);
             }
             
             // 隱藏 textarea
@@ -1858,20 +1854,13 @@
          * @param {string} mode - 朗讀模式 ('word' 或 'article')
          * @returns {string[]} - 分割後的項目陣列
          */
-        initItems(text, mode, punctuationReadingEnabled = true) {
+        initItems(text, mode) {
             if (mode === 'word') {
-                // 詞語模式：按行分割，每個都是文字類型
-                this.items = text.split('\n').map(s => s.trim()).filter(s => s !== '').map(s => ({ type: 'text', content: s }));
+                // 詞語模式：按行分割
+                this.items = text.split('\n').map(s => s.trim()).filter(s => s !== '');
             } else {
-                // 文章模式：使用 splitArticleSegments
-                const segments = splitArticleSegments(text);
-                if (punctuationReadingEnabled) {
-                    // 包含標點符號
-                    this.items = segments;
-                } else {
-                    // 只取文字段落
-                    this.items = segments.filter(s => s.type === 'text');
-                }
+                // 文章模式：使用 splitArticleSegments，只取文字段落
+                this.items = splitArticleSegments(text).filter(s => s.type === 'text').map(s => s.content);
             }
             this.totalItems = this.items.length;
             return this.items;
@@ -2033,22 +2022,15 @@
             return;
         }
         
-        // 重置停止狀態，確保 speakPromise 可以正常執行
-        isStopped = false;
-        isPaused = false;
-        
         if (!ManualReadingState.hasStarted) {
-            // 取得標點符號朗讀設定 (Requirement 10.1)
-            const punctuationReadingEnabled = document.getElementById('punctuationReadingEnabled').value === 'true';
-            
             // 首次開始 (Requirement 3.2)
-            ManualReadingState.initItems(text, mode, punctuationReadingEnabled);
+            ManualReadingState.initItems(text, mode);
             ManualReadingState.currentIndex = 0;
             ManualReadingState.hasStarted = true;
             
             // 切換到顯示模式 (Requirement 3.6)
             const highlightMode = mode === 'word' ? 'word' : 'article';
-            HighlightManager.switchToDisplayMode(text, highlightMode, punctuationReadingEnabled);
+            HighlightManager.switchToDisplayMode(text, highlightMode);
             
             // 更新按鈕狀態和標籤 (Requirements 3.1, 3.3, 3.5)
             updateManualButtonStates();
@@ -2146,29 +2128,21 @@
         ManualReadingState.isReading = true;
         updateManualButtonStates();
         
-        // 更新高亮 (Requirements 3.6, 10.3)
+        // 更新高亮 (Requirement 3.6)
         HighlightManager.highlightItem(ManualReadingState.currentIndex);
         
-        // 取得語速設定
+        // 更新狀態顯示 (Requirement 7.1)
         const mode = document.querySelector('input[name="mode"]:checked').value;
-        const speechRate = mode === 'word'
+        const label = mode === 'word' ? '詞語' : '句子';
+        updateStatus(`正在朗讀：${item}`, '');
+        
+        // 取得語速設定
+        const speechRate = mode === 'word' 
             ? parseFloat(document.getElementById('wordSpeechRate').value) || 0.9
             : parseFloat(document.getElementById('speechRate').value) || 0.9;
         
-        // 根據項目類型決定朗讀內容 (Requirements 7.1, 10.2)
-        let textToSpeak;
-        if (item.type === 'punct') {
-            // 標點符號：朗讀標點名稱 (Requirement 10.2)
-            textToSpeak = getPunctuationName(item.content, lang);
-            updateStatus(`正在朗讀：${textToSpeak}`, '');
-        } else {
-            // 文字：直接朗讀
-            textToSpeak = item.content;
-            updateStatus(`正在朗讀：${item.content}`, '');
-        }
-        
         try {
-            await speakPromise(textToSpeak, lang, selectedVoice, speechRate);
+            await speakPromise(item, lang, selectedVoice, speechRate);
         } catch (error) {
             console.error('朗讀錯誤:', error);
         }
@@ -2182,6 +2156,7 @@
             updateStatus('播放完畢', '');
         }
     }
+
     /**
      * 更新手動模式按鈕狀態
      * 根據 ManualReadingState 更新按鈕禁用狀態
@@ -2195,11 +2170,10 @@
         
         const hasStarted = ManualReadingState.hasStarted;
         const isReading = ManualReadingState.isReading;
-        const isAtFirst = ManualReadingState.isAtFirst();
         const isAtLast = ManualReadingState.isAtLast();
         
-        // 上一個按鈕：未開始時禁用，朗讀中禁用，第一個項目時禁用 (Requirements 5.1, 5.2, 5.7)
-        if (prevBtn) prevBtn.disabled = !hasStarted || isReading || isAtFirst;
+        // 上一個按鈕：未開始時禁用，朗讀中禁用 (Requirement 5.1)
+        if (prevBtn) prevBtn.disabled = !hasStarted || isReading;
         
         // 下一個按鈕：未開始時禁用，朗讀中禁用，最後一個時禁用 (Requirements 4.1, 4.4)
         if (nextBtn) nextBtn.disabled = !hasStarted || isReading || isAtLast;
@@ -4375,8 +4349,7 @@
         
         // 切換到顯示模式，啟用高亮功能 - Requirements 6.2
         const highlightMode = mode === 'word' ? 'word' : 'article';
-        const punctuationEnabled = document.getElementById('punctuationReadingEnabled').value === 'true';
-        HighlightManager.switchToDisplayMode(text, highlightMode, punctuationEnabled);
+        HighlightManager.switchToDisplayMode(text, highlightMode);
 
         try {
             if (mode === 'word') {

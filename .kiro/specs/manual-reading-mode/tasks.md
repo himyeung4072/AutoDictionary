@@ -146,6 +146,46 @@
 - [x] 10. Final Checkpoint - 確保所有功能正常運作
   - 確保所有測試通過，如有問題請詢問用戶
 
+- [x] 11. 修復上一個按鈕在第一個項目時的禁用邏輯
+  - [x] 11.1 更新 updateManualButtonStates() 函數
+    - 加入 isAtFirst 條件到 prevBtn.disabled 邏輯
+    - prevBtn.disabled = !hasStarted || isReading || isAtFirst
+    - _Requirements: 5.2, 5.7_
+
+  - [ ] 11.2 更新 Property 4 測試
+
+    - 驗證 prevBtn 在第一個項目時禁用
+    - **Property 4: Button State Consistency**
+    - **Validates: Requirements 5.2, 5.7**
+
+- [x] 12. 修復文章模式標點符號朗讀功能
+  - [x] 12.1 更新 ManualReadingState.initItems() 方法
+    - 加入 punctuationReadingEnabled 參數
+    - 文章模式時根據設定決定是否包含標點符號段落
+    - items 陣列改為包含 { type, content } 物件
+    - _Requirements: 10.1, 10.4_
+
+  - [x] 12.2 更新 manualStartOrReplay() 函數
+    - 傳入 punctuationReadingEnabled 設定到 initItems()
+    - _Requirements: 10.1_
+
+  - [x] 12.3 更新 readCurrentItem() 函數
+    - 根據 item.type 決定朗讀內容
+    - 標點符號類型使用 getPunctuationName() 取得朗讀名稱
+    - _Requirements: 10.2, 10.3_
+
+  - [x] 12.4 更新 HighlightManager.highlightItem() 以支援標點符號高亮
+    - 確保標點符號段落也能正確高亮
+    - _Requirements: 10.3, 10.5_
+
+  - [ ]* 12.5 撰寫標點符號朗讀屬性測試
+    - **Property 11: Punctuation Segments Included When Enabled**
+    - **Property 12: Punctuation Segments Skipped When Disabled**
+    - **Validates: Requirements 10.1, 10.3, 10.4, 10.5**
+
+- [x] 13. Checkpoint - 確保修復功能正常運作
+  - 確保所有測試通過，如有問題請詢問用戶
+
 ## Notes
 
 - 所有任務（包括測試任務）都是必要的

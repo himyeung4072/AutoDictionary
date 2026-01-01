@@ -72,11 +72,12 @@
 #### Acceptance Criteria
 
 1. WHEN reading has not started, THE "上一個/句" button SHALL be disabled
-2. WHEN the user clicks "上一個/句" and Reading_Index is greater than 0, THE System SHALL decrease Reading_Index by 1
-3. WHEN the user clicks "上一個/句" and Reading_Index is 0, THE System SHALL re-read the first item
+2. WHEN Reading_Index is 0 (first item), THE "上一個/句" button SHALL be disabled because there is no previous item
+3. WHEN the user clicks "上一個/句" and Reading_Index is greater than 0, THE System SHALL decrease Reading_Index by 1
 4. WHEN the user clicks "上一個/句", THE System SHALL read the item at the new Reading_Index
 5. THE System SHALL update the progress bar when going to the previous item
 6. THE System SHALL update the highlight to the new Current_Item
+7. WHEN Reading_Index advances from 0 to 1 (via next button), THE "上一個/句" button SHALL become enabled
 
 ### Requirement 6: 取消按鈕功能
 
@@ -125,3 +126,15 @@
 4. WHEN the user presses Space, THE System SHALL trigger "開始/重讀" action
 5. WHEN the user presses Escape, THE System SHALL trigger "取消" action
 6. THE keyboard shortcuts SHALL only work when no input field is focused
+
+### Requirement 10: 文章模式標點符號朗讀
+
+**User Story:** As a user, I want punctuation marks to be read aloud in article manual reading mode when the punctuation reading setting is enabled, so that I can hear the complete sentence structure.
+
+#### Acceptance Criteria
+
+1. WHEN Manual_Reading_Mode is active in article mode AND punctuation reading is enabled, THE System SHALL include punctuation segments in the reading sequence
+2. WHEN reading a punctuation segment, THE System SHALL speak the punctuation name (e.g., "逗號", "句號")
+3. WHEN reading a punctuation segment, THE System SHALL highlight the punctuation mark in the display
+4. WHEN punctuation reading is disabled, THE System SHALL skip punctuation segments but still advance through text segments
+5. THE System SHALL maintain synchronized highlighting between the spoken content and the displayed text for both text and punctuation segments
