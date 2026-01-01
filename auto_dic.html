@@ -329,6 +329,59 @@
             flex-shrink: 0;
         }
         
+        /* ===== Manual Controls Button Styles ===== */
+        /* Previous Button - Cool Blue */
+        #prevBtn { 
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(37, 99, 235, 0.18));
+            border: 2px solid rgba(59, 130, 246, 0.7);
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.25), 0 4px 8px rgba(59, 130, 246, 0.15);
+            color: #1d4ed8;
+        }
+        #prevBtn:hover:not(:disabled) {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.28));
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), 0 6px 12px rgba(59, 130, 246, 0.25);
+            transform: translateY(-1px);
+        }
+        
+        /* Manual Start Button - Fresh Emerald Green (same as auto start) */
+        #manualStartBtn { 
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.18));
+            border: 2px solid rgba(16, 185, 129, 0.7);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.25), 0 4px 8px rgba(16, 185, 129, 0.15);
+            color: #047857;
+        }
+        #manualStartBtn:hover:not(:disabled) {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.28));
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4), 0 6px 12px rgba(16, 185, 129, 0.25);
+            transform: translateY(-1px);
+        }
+        
+        /* Manual Stop Button - Soft Rose (same as auto stop) */
+        #manualStopBtn { 
+            background: linear-gradient(135deg, rgba(244, 63, 94, 0.12), rgba(225, 29, 72, 0.18));
+            border: 2px solid rgba(244, 63, 94, 0.7);
+            box-shadow: 0 0 12px rgba(244, 63, 94, 0.25), 0 4px 8px rgba(244, 63, 94, 0.15);
+            color: #be123c;
+        }
+        #manualStopBtn:hover:not(:disabled) {
+            background: linear-gradient(135deg, rgba(244, 63, 94, 0.2), rgba(225, 29, 72, 0.28));
+            box-shadow: 0 0 20px rgba(244, 63, 94, 0.4), 0 6px 12px rgba(244, 63, 94, 0.25);
+            transform: translateY(-1px);
+        }
+        
+        /* Next Button - Cool Blue */
+        #nextBtn { 
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(37, 99, 235, 0.18));
+            border: 2px solid rgba(59, 130, 246, 0.7);
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.25), 0 4px 8px rgba(59, 130, 246, 0.15);
+            color: #1d4ed8;
+        }
+        #nextBtn:hover:not(:disabled) {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.28));
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), 0 6px 12px rgba(59, 130, 246, 0.25);
+            transform: translateY(-1px);
+        }
+        
         /* Main content area - add padding to prevent overlap with fixed controls */
         .main-content {
             padding-bottom: calc(130px + var(--safe-area-inset-bottom)); /* Space for fixed player controls + safe area */
@@ -1020,6 +1073,55 @@
                 color: var(--color-text);
             }
             
+            /* ===== Manual Controls Dark Mode ===== */
+            /* Previous Button - Neon Blue */
+            #prevBtn { 
+                background: linear-gradient(135deg, rgba(96, 165, 250, 0.15), rgba(59, 130, 246, 0.25));
+                border: 2px solid rgba(96, 165, 250, 0.6);
+                box-shadow: 0 0 12px rgba(96, 165, 250, 0.3), 0 4px 8px rgba(96, 165, 250, 0.2);
+                color: #93c5fd;
+            }
+            #prevBtn:hover:not(:disabled) {
+                background: linear-gradient(135deg, rgba(96, 165, 250, 0.25), rgba(59, 130, 246, 0.35));
+                box-shadow: 0 0 20px rgba(96, 165, 250, 0.5), 0 6px 12px rgba(96, 165, 250, 0.3);
+            }
+            
+            /* Manual Start Button - Neon Green */
+            #manualStartBtn { 
+                background: linear-gradient(135deg, rgba(52, 211, 153, 0.15), rgba(16, 185, 129, 0.25));
+                border: 2px solid rgba(52, 211, 153, 0.6);
+                box-shadow: 0 0 12px rgba(52, 211, 153, 0.3), 0 4px 8px rgba(52, 211, 153, 0.2);
+                color: #6ee7b7;
+            }
+            #manualStartBtn:hover:not(:disabled) {
+                background: linear-gradient(135deg, rgba(52, 211, 153, 0.25), rgba(16, 185, 129, 0.35));
+                box-shadow: 0 0 20px rgba(52, 211, 153, 0.5), 0 6px 12px rgba(52, 211, 153, 0.3);
+            }
+            
+            /* Manual Stop Button - Neon Rose */
+            #manualStopBtn { 
+                background: linear-gradient(135deg, rgba(251, 113, 133, 0.15), rgba(244, 63, 94, 0.25));
+                border: 2px solid rgba(251, 113, 133, 0.6);
+                box-shadow: 0 0 12px rgba(251, 113, 133, 0.3), 0 4px 8px rgba(251, 113, 133, 0.2);
+                color: #fda4af;
+            }
+            #manualStopBtn:hover:not(:disabled) {
+                background: linear-gradient(135deg, rgba(251, 113, 133, 0.25), rgba(244, 63, 94, 0.35));
+                box-shadow: 0 0 20px rgba(251, 113, 133, 0.5), 0 6px 12px rgba(251, 113, 133, 0.3);
+            }
+            
+            /* Next Button - Neon Blue */
+            #nextBtn { 
+                background: linear-gradient(135deg, rgba(96, 165, 250, 0.15), rgba(59, 130, 246, 0.25));
+                border: 2px solid rgba(96, 165, 250, 0.6);
+                box-shadow: 0 0 12px rgba(96, 165, 250, 0.3), 0 4px 8px rgba(96, 165, 250, 0.2);
+                color: #93c5fd;
+            }
+            #nextBtn:hover:not(:disabled) {
+                background: linear-gradient(135deg, rgba(96, 165, 250, 0.25), rgba(59, 130, 246, 0.35));
+                box-shadow: 0 0 20px rgba(96, 165, 250, 0.5), 0 6px 12px rgba(96, 165, 250, 0.3);
+            }
+            
             /* iOS Hint Dark Mode */
             .ios-hint-details {
                 background: #3d2e00;
@@ -1276,10 +1378,10 @@
         <!-- Mode Tabs -->
         <div class="mode-tabs" role="tablist" aria-label="選擇模式">
             <button class="mode-tab active" role="tab" data-mode="word" aria-selected="true" tabindex="0">
-                讀詞語
+                讀 詞語/句子
             </button>
             <button class="mode-tab" role="tab" data-mode="article" aria-selected="false" tabindex="-1">
-                讀文章
+                讀 文章
             </button>
         </div>
         <!-- Hidden radio buttons for form compatibility -->
@@ -1302,6 +1404,26 @@
             </summary>
             <div class="collapsible-content">
                 <div class="settings-content">
+                <!-- Shared Settings: Punctuation Reading Toggle -->
+                <div class="settings-control-group">
+                    <label>朗讀標點符號：</label>
+                    <div class="segmented-control" id="punctuationReadingSegments" role="radiogroup" aria-label="朗讀標點符號">
+                        <button class="segment active" data-value="true" role="radio" aria-checked="true">開</button>
+                        <button class="segment" data-value="false" role="radio" aria-checked="false">關</button>
+                    </div>
+                    <input type="hidden" id="punctuationReadingEnabled" value="true">
+                </div>
+                
+                <!-- Reading Mode Toggle (Requirements 1.1, 1.2) -->
+                <div class="settings-control-group">
+                    <label>朗讀模式：</label>
+                    <div class="segmented-control" id="readingModeSegments" role="radiogroup" aria-label="朗讀模式">
+                        <button class="segment active" data-value="auto" role="radio" aria-checked="true">自動朗讀</button>
+                        <button class="segment" data-value="manual" role="radio" aria-checked="false">手動朗讀</button>
+                    </div>
+                    <input type="hidden" id="readingMode" value="auto">
+                </div>
+                
                 <!-- Word Mode Controls -->
                 <div id="wordControls">
                     <!-- Speed: Segmented Control -->
@@ -1358,16 +1480,6 @@
 
                 <!-- Article Mode Controls -->
                 <div id="articleControls" class="hidden">
-                    <!-- Punctuation Reading Toggle: Segmented Control -->
-                    <div class="settings-control-group">
-                        <label>朗讀標點符號：</label>
-                        <div class="segmented-control" id="punctuationReadingSegments" role="radiogroup" aria-label="朗讀標點符號">
-                            <button class="segment active" data-value="true" role="radio" aria-checked="true">開</button>
-                            <button class="segment" data-value="false" role="radio" aria-checked="false">關</button>
-                        </div>
-                        <input type="hidden" id="punctuationReadingEnabled" value="true">
-                    </div>
-                    
                     <!-- Speed: Segmented Control -->
                     <div class="settings-control-group">
                         <label>朗讀速度：</label>
@@ -1450,7 +1562,7 @@
         <span class="status-reading" id="statusReading" aria-live="polite" aria-atomic="true"></span>
         <span class="status-waiting" id="statusWaiting" aria-live="polite"></span>
     </div>
-    <div class="player-controls" role="group" aria-label="播放控制">
+    <div class="player-controls" id="autoControls" role="group" aria-label="播放控制">
         <button id="startBtn" onclick="startReading()" aria-label="開始朗讀">
             開始
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
@@ -1464,6 +1576,25 @@
         取消
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
     </button>
+    </div>
+    <!-- 手動朗讀控制按鈕 (預設隱藏) -->
+    <div class="player-controls manual-controls hidden" id="manualControls" role="group" aria-label="手動播放控制">
+        <button id="prevBtn" onclick="manualPrevious()" disabled aria-label="上一個">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            <span id="prevBtnText">上一個</span>
+        </button>
+        <button id="manualStartBtn" onclick="manualStartOrReplay()" aria-label="開始朗讀">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            <span id="manualStartBtnText">開始</span>
+        </button>
+        <button id="manualStopBtn" onclick="manualStop()" disabled aria-label="取消朗讀">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            取消
+        </button>
+        <button id="nextBtn" onclick="manualNext()" disabled aria-label="下一個">
+            <span id="nextBtnText">下一個</span>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+        </button>
     </div>
     <div class="keyboard-hint" aria-hidden="true">
         快捷鍵：<kbd>Space</kbd> 開始/暫停 · <kbd>Esc</kbd> 停止
@@ -1682,6 +1813,421 @@
             }
         }
     };
+
+    // ===== ManualReadingState 模組 =====
+    // 負責管理手動朗讀模式的狀態
+    // Requirements: 3.2, 4.2, 5.2, 5.3
+    const ManualReadingState = {
+        // 朗讀模式: 'auto' | 'manual'
+        readingMode: 'auto',
+        
+        // 當前朗讀索引
+        currentIndex: -1,
+        
+        // 是否已開始朗讀
+        hasStarted: false,
+        
+        // 是否正在朗讀中（語音合成進行中）
+        isReading: false,
+        
+        // 分割後的項目陣列
+        items: [],
+        
+        // 總項目數
+        totalItems: 0,
+        
+        /**
+         * 重置狀態
+         * 將所有狀態恢復到初始值
+         */
+        reset() {
+            this.currentIndex = -1;
+            this.hasStarted = false;
+            this.isReading = false;
+            this.items = [];
+            this.totalItems = 0;
+        },
+        
+        /**
+         * 初始化項目
+         * @param {string} text - 要朗讀的文字
+         * @param {string} mode - 朗讀模式 ('word' 或 'article')
+         * @returns {string[]} - 分割後的項目陣列
+         */
+        initItems(text, mode) {
+            if (mode === 'word') {
+                // 詞語模式：按行分割
+                this.items = text.split('\n').map(s => s.trim()).filter(s => s !== '');
+            } else {
+                // 文章模式：使用 splitArticleSegments，只取文字段落
+                this.items = splitArticleSegments(text).filter(s => s.type === 'text').map(s => s.content);
+            }
+            this.totalItems = this.items.length;
+            return this.items;
+        },
+        
+        /**
+         * 取得當前項目
+         * @returns {string|null} - 當前項目內容，若索引無效則返回 null
+         */
+        getCurrentItem() {
+            if (this.currentIndex >= 0 && this.currentIndex < this.items.length) {
+                return this.items[this.currentIndex];
+            }
+            return null;
+        },
+        
+        /**
+         * 移動到下一個項目
+         * @returns {boolean} - 是否成功移動（若已在最後則返回 false）
+         */
+        moveNext() {
+            if (this.currentIndex < this.items.length - 1) {
+                this.currentIndex++;
+                return true;
+            }
+            return false;
+        },
+        
+        /**
+         * 移動到上一個項目
+         * @returns {boolean} - 是否成功移動（若已在第一個則返回 false）
+         */
+        movePrevious() {
+            if (this.currentIndex > 0) {
+                this.currentIndex--;
+                return true;
+            }
+            return false; // 已在第一個
+        },
+        
+        /**
+         * 是否在第一個項目
+         * @returns {boolean}
+         */
+        isAtFirst() {
+            return this.currentIndex <= 0;
+        },
+        
+        /**
+         * 是否在最後一個項目
+         * @returns {boolean}
+         */
+        isAtLast() {
+            return this.currentIndex >= this.items.length - 1;
+        }
+    };
+
+    // ===== 朗讀模式切換函數 =====
+    // Requirements: 1.3, 1.4, 8.1, 8.2, 8.3, 8.4
+    
+    /**
+     * 切換朗讀模式
+     * @param {string} mode - 'auto' 或 'manual'
+     */
+    function switchReadingMode(mode) {
+        // 如果正在朗讀，先停止 (Requirements 8.1, 8.2)
+        // 停止自動朗讀模式
+        if (!isStopped) {
+            stopReading();
+        }
+        
+        // 停止手動朗讀模式並重置狀態
+        if (ManualReadingState.hasStarted) {
+            // 停止語音
+            synth.cancel();
+            // 重置手動朗讀狀態
+            ManualReadingState.reset();
+            // 切換回編輯模式（這會保留 textarea 的文字內容）
+            HighlightManager.switchToEditMode();
+            // 重置進度條
+            resetProgress();
+            // 清除狀態顯示
+            updateStatus('', '');
+        }
+        
+        ManualReadingState.readingMode = mode;
+        
+        // 切換控制按鈕顯示 (Requirements 1.3, 1.4)
+        const autoControls = document.querySelector('.player-controls:not(.manual-controls)');
+        const manualControls = document.getElementById('manualControls');
+        
+        if (mode === 'manual') {
+            if (autoControls) autoControls.classList.add('hidden');
+            if (manualControls) manualControls.classList.remove('hidden');
+        } else {
+            if (autoControls) autoControls.classList.remove('hidden');
+            if (manualControls) manualControls.classList.add('hidden');
+        }
+        
+        // 更新手動控制按鈕狀態
+        updateManualButtonStates();
+        updateManualStartButtonLabel();
+        
+        // 更新鍵盤提示
+        updateKeyboardHint(mode);
+        
+        // 儲存設定 (Requirement 8.3)
+        saveSettings();
+    }
+    
+    /**
+     * 更新鍵盤提示
+     * @param {string} mode - 'auto' 或 'manual'
+     */
+    function updateKeyboardHint(mode) {
+        const hint = document.querySelector('.keyboard-hint');
+        if (!hint) return;
+        
+        if (mode === 'manual') {
+            hint.innerHTML = '快捷鍵：<kbd>Space</kbd> 開始/重讀 · <kbd>←</kbd> 上一個 · <kbd>→</kbd> 下一個 · <kbd>Esc</kbd> 取消';
+        } else {
+            hint.innerHTML = '快捷鍵：<kbd>Space</kbd> 開始/暫停 · <kbd>Esc</kbd> 停止';
+        }
+    }
+
+    // ===== 手動朗讀核心功能 =====
+    // Requirements: 3.1-3.6, 4.2-4.6, 5.2-5.6, 6.2-6.6, 7.1
+
+    /**
+     * 手動模式：開始或重讀
+     * 首次點擊初始化並朗讀第一個項目，後續點擊重讀當前項目
+     * Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6
+     */
+    async function manualStartOrReplay() {
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        const rawText = document.getElementById('words').value;
+        const text = sanitizeInput(rawText);
+        const lang = document.getElementById('langSelect').value;
+        const selectedVoice = document.getElementById('voiceSelect').value;
+        
+        // 空狀態檢查
+        if (text.trim() === '') {
+            showErrorToast('請先輸入內容');
+            const textarea = document.getElementById('words');
+            textarea.focus();
+            textarea.classList.add('input-error');
+            setTimeout(() => textarea.classList.remove('input-error'), 2000);
+            return;
+        }
+        
+        // 語言驗證
+        const validation = validateTextForLanguage(text, lang);
+        if (!validation.valid) {
+            showErrorToast(validation.errorMessage);
+            const textarea = document.getElementById('words');
+            textarea.focus();
+            textarea.classList.add('input-error');
+            setTimeout(() => textarea.classList.remove('input-error'), 2000);
+            return;
+        }
+        
+        if (!ManualReadingState.hasStarted) {
+            // 首次開始 (Requirement 3.2)
+            ManualReadingState.initItems(text, mode);
+            ManualReadingState.currentIndex = 0;
+            ManualReadingState.hasStarted = true;
+            
+            // 切換到顯示模式 (Requirement 3.6)
+            const highlightMode = mode === 'word' ? 'word' : 'article';
+            HighlightManager.switchToDisplayMode(text, highlightMode);
+            
+            // 更新按鈕狀態和標籤 (Requirements 3.1, 3.3, 3.5)
+            updateManualButtonStates();
+            updateManualStartButtonLabel();
+            
+            // 更新進度顯示
+            updateManualProgress();
+        }
+        
+        // 朗讀當前項目 (Requirements 3.4, 3.6)
+        await readCurrentItem(lang, selectedVoice);
+    }
+
+    /**
+     * 手動模式：下一個
+     * 移動到下一個項目並朗讀
+     * Requirements: 4.2, 4.3, 4.5, 4.6
+     */
+    async function manualNext() {
+        // 未開始或正在朗讀時不處理
+        if (!ManualReadingState.hasStarted || ManualReadingState.isReading) return;
+        
+        // 移動到下一個項目 (Requirement 4.2)
+        if (ManualReadingState.moveNext()) {
+            // 更新進度和按鈕狀態 (Requirements 4.5, 4.6)
+            updateManualProgress();
+            updateManualButtonStates();
+            
+            // 朗讀新項目 (Requirement 4.3)
+            const lang = document.getElementById('langSelect').value;
+            const selectedVoice = document.getElementById('voiceSelect').value;
+            await readCurrentItem(lang, selectedVoice);
+        }
+    }
+
+    /**
+     * 手動模式：上一個
+     * 移動到上一個項目並朗讀，第一個項目時重讀
+     * Requirements: 5.2, 5.3, 5.4, 5.5, 5.6
+     */
+    async function manualPrevious() {
+        // 未開始或正在朗讀時不處理
+        if (!ManualReadingState.hasStarted || ManualReadingState.isReading) return;
+        
+        // 嘗試移動到上一個項目 (Requirements 5.2, 5.3)
+        // 即使在第一個也會返回 false，但仍會重讀當前項目
+        ManualReadingState.movePrevious();
+        
+        // 更新進度和按鈕狀態 (Requirements 5.5, 5.6)
+        updateManualProgress();
+        updateManualButtonStates();
+        
+        // 朗讀當前項目 (Requirement 5.4)
+        const lang = document.getElementById('langSelect').value;
+        const selectedVoice = document.getElementById('voiceSelect').value;
+        await readCurrentItem(lang, selectedVoice);
+    }
+
+    /**
+     * 手動模式：取消
+     * 停止語音合成，重置所有狀態，切換回編輯模式
+     * Requirements: 6.2, 6.3, 6.4, 6.5, 6.6
+     */
+    function manualStop() {
+        // 停止語音 (Requirement 6.2)
+        synth.cancel();
+        
+        // 重置狀態 (Requirement 6.3)
+        ManualReadingState.reset();
+        
+        // 切換回編輯模式 (Requirement 6.5)
+        HighlightManager.switchToEditMode();
+        
+        // 重置進度條 (Requirement 6.4)
+        resetProgress();
+        
+        // 更新按鈕狀態和標籤 (Requirement 6.6)
+        updateManualButtonStates();
+        updateManualStartButtonLabel();
+        
+        // 清除狀態顯示
+        updateStatus('', '');
+    }
+
+    /**
+     * 朗讀當前項目
+     * 朗讀當前索引的項目，更新高亮和狀態顯示
+     * Requirements: 3.6, 7.1
+     */
+    async function readCurrentItem(lang, selectedVoice) {
+        const item = ManualReadingState.getCurrentItem();
+        if (!item) return;
+        
+        // 設定朗讀中狀態
+        ManualReadingState.isReading = true;
+        updateManualButtonStates();
+        
+        // 更新高亮 (Requirement 3.6)
+        HighlightManager.highlightItem(ManualReadingState.currentIndex);
+        
+        // 更新狀態顯示 (Requirement 7.1)
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        const label = mode === 'word' ? '詞語' : '句子';
+        updateStatus(`正在朗讀：${item}`, '');
+        
+        // 取得語速設定
+        const speechRate = mode === 'word' 
+            ? parseFloat(document.getElementById('wordSpeechRate').value) || 0.9
+            : parseFloat(document.getElementById('speechRate').value) || 0.9;
+        
+        try {
+            await speakPromise(item, lang, selectedVoice, speechRate);
+        } catch (error) {
+            console.error('朗讀錯誤:', error);
+        }
+        
+        // 朗讀完成，更新狀態
+        ManualReadingState.isReading = false;
+        updateManualButtonStates();
+        
+        // 檢查是否完成所有項目
+        if (ManualReadingState.isAtLast()) {
+            updateStatus('播放完畢', '');
+        }
+    }
+
+    /**
+     * 更新手動模式按鈕狀態
+     * 根據 ManualReadingState 更新按鈕禁用狀態
+     * Requirements: 3.5, 4.1, 4.4, 5.1, 6.1
+     */
+    function updateManualButtonStates() {
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const manualStartBtn = document.getElementById('manualStartBtn');
+        const manualStopBtn = document.getElementById('manualStopBtn');
+        
+        const hasStarted = ManualReadingState.hasStarted;
+        const isReading = ManualReadingState.isReading;
+        const isAtLast = ManualReadingState.isAtLast();
+        
+        // 上一個按鈕：未開始時禁用，朗讀中禁用 (Requirement 5.1)
+        if (prevBtn) prevBtn.disabled = !hasStarted || isReading;
+        
+        // 下一個按鈕：未開始時禁用，朗讀中禁用，最後一個時禁用 (Requirements 4.1, 4.4)
+        if (nextBtn) nextBtn.disabled = !hasStarted || isReading || isAtLast;
+        
+        // 開始/重讀按鈕：朗讀中禁用 (Requirement 3.5)
+        if (manualStartBtn) manualStartBtn.disabled = isReading;
+        
+        // 取消按鈕：未開始時禁用 (Requirement 6.1)
+        if (manualStopBtn) manualStopBtn.disabled = !hasStarted;
+    }
+
+    /**
+     * 更新開始/重讀按鈕標籤
+     * 根據 hasStarted 更新按鈕標籤
+     * Requirements: 3.1, 3.3, 6.6
+     */
+    function updateManualStartButtonLabel() {
+        const btnText = document.getElementById('manualStartBtnText');
+        if (!btnText) return;
+        
+        if (ManualReadingState.hasStarted) {
+            btnText.textContent = '重讀';
+        } else {
+            btnText.textContent = '開始';
+        }
+    }
+
+    /**
+     * 更新手動模式進度
+     * 更新進度條和狀態計數
+     * Requirements: 7.2, 7.3
+     */
+    function updateManualProgress() {
+        const current = ManualReadingState.currentIndex + 1;
+        const total = ManualReadingState.totalItems;
+        
+        // 更新進度條 (Requirement 7.3)
+        const percentage = total > 0 ? (current / total) * 100 : 0;
+        const progressFill = document.getElementById('progressFill');
+        if (progressFill) {
+            progressFill.style.width = percentage + '%';
+        }
+        
+        // 更新狀態計數 (Requirement 7.2)
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        const statusCount = document.getElementById('statusCount');
+        if (statusCount) {
+            const label = mode === 'word' ? '詞語' : '句子';
+            statusCount.textContent = `${label} ${current}/${total} 個`;
+        }
+        
+        // 更新 ARIA
+        updateProgressBarAria(current, total);
+    }
 
     // 停止進度條動畫
     function stopProgressAnimation() {
@@ -1991,6 +2537,17 @@
             segment.classList.toggle('active', isActive);
             segment.setAttribute('aria-checked', isActive ? 'true' : 'false');
         });
+        
+        // 更新滑動指示器位置（Requirements 3.1, 3.2）
+        const activeSegment = container.querySelector('.segment.active');
+        const indicator = container.querySelector('.segment-indicator');
+        if (activeSegment && indicator) {
+            indicator.style.transition = 'none'; // 避免載入時的動畫
+            indicator.style.left = activeSegment.offsetLeft + 'px';
+            indicator.style.width = activeSegment.offsetWidth + 'px';
+            indicator.offsetHeight; // Force reflow
+            indicator.style.transition = '';
+        }
     }
     
     /**
@@ -2105,6 +2662,11 @@
         initSegmentedControl('charWaitTimeSegments', 'charWaitTime', onSettingChange);
         // 標點符號朗讀開關 (Requirements 1.1, 1.5)
         initSegmentedControl('punctuationReadingSegments', 'punctuationReadingEnabled', onSettingChange);
+        
+        // 朗讀模式切換 (Requirements 1.1, 1.2)
+        initSegmentedControl('readingModeSegments', 'readingMode', (value) => {
+            switchReadingMode(value);
+        });
     }
 
     // Generate settings preview text based on current settings
@@ -2290,6 +2852,16 @@
         panel.addEventListener('toggle', () => {
             saveSettingsPanelState(panel.open);
             saveSettings(); // Also save to unified settings
+            
+            // When panel is opened, update segmented control indicators
+            // This ensures indicators are correctly positioned if panel was closed during page load
+            // Requirements: 4.1, 4.2
+            if (panel.open) {
+                const settingsContent = panel.querySelector('.settings-content');
+                if (settingsContent) {
+                    updateSegmentedControlIndicators(settingsContent);
+                }
+            }
         });
     }
 
@@ -2313,6 +2885,8 @@
             charWaitTime: document.getElementById('charWaitTime').value,
             // 標點符號朗讀開關 (Requirements 1.1, 1.4, 1.5)
             punctuationReadingEnabled: document.getElementById('punctuationReadingEnabled').value === 'true',
+            // 朗讀模式 (Requirements 1.5)
+            readingMode: document.getElementById('readingMode').value,
             // New settings for panel state and debug visibility (Requirements 4.6, 8.4)
             settingsPanelOpen: settingsPanel ? settingsPanel.open : true,
             debugVisible: debugSection ? (debugSection.style.display !== 'none') : false,
@@ -2347,6 +2921,16 @@
                         tab.setAttribute('tabindex', '-1');
                     }
                 });
+                // Update language tab indicator position (Requirements 1.1, 1.2)
+                const activeLangTab = document.querySelector('.lang-tab.active');
+                const langIndicator = document.querySelector('.lang-tabs .tab-indicator');
+                if (activeLangTab && langIndicator) {
+                    langIndicator.style.transition = 'none';
+                    langIndicator.style.left = activeLangTab.offsetLeft + 'px';
+                    langIndicator.style.width = activeLangTab.offsetWidth + 'px';
+                    langIndicator.offsetHeight; // Force reflow
+                    langIndicator.style.transition = '';
+                }
             }
             if (settings.mode) {
                 // Update hidden radio button
@@ -2367,7 +2951,7 @@
                         tab.setAttribute('tabindex', '-1');
                     }
                 });
-                // Update tab indicator position
+                // Update mode tab indicator position (Requirements 2.1, 2.2)
                 const activeTab = document.querySelector('.mode-tab.active');
                 const indicator = document.querySelector('.mode-tabs .tab-indicator');
                 if (activeTab && indicator) {
@@ -2409,6 +2993,26 @@
             const punctuationEnabled = settings.punctuationReadingEnabled !== undefined ? settings.punctuationReadingEnabled : true;
             document.getElementById('punctuationReadingEnabled').value = punctuationEnabled.toString();
             updateSegmentedControl('punctuationReadingSegments', punctuationEnabled.toString());
+            
+            // 載入朗讀模式設定 (Requirements 1.5, 1.6)
+            // 預設為 'auto'（自動朗讀）
+            const readingMode = settings.readingMode || 'auto';
+            document.getElementById('readingMode').value = readingMode;
+            updateSegmentedControl('readingModeSegments', readingMode);
+            // 更新 ManualReadingState 和 UI
+            ManualReadingState.readingMode = readingMode;
+            // 切換控制按鈕顯示
+            const autoControls = document.querySelector('.player-controls:not(.manual-controls)');
+            const manualControls = document.getElementById('manualControls');
+            if (readingMode === 'manual') {
+                if (autoControls) autoControls.classList.add('hidden');
+                if (manualControls) manualControls.classList.remove('hidden');
+            } else {
+                if (autoControls) autoControls.classList.remove('hidden');
+                if (manualControls) manualControls.classList.add('hidden');
+            }
+            // 更新鍵盤提示
+            updateKeyboardHint(readingMode);
             
             // Load settings panel state (Requirement 4.6)
             if (settings.settingsPanelOpen !== undefined) {
@@ -2694,10 +3298,103 @@
     document.addEventListener('DOMContentLoaded', initHapticFeedback);
     
     // ==================== 鍵盤快捷鍵 (Keyboard Shortcuts) ====================
-    // Requirements 6.1, 6.2, 6.3, 6.4
+    // Requirements 6.1, 6.2, 6.3, 6.4, 9.1, 9.2, 9.3, 9.4, 9.5, 9.6
+    
+    /**
+     * 手動模式鍵盤事件處理
+     * Requirements: 9.2, 9.3, 9.4, 9.5, 9.6
+     * @param {KeyboardEvent} e - 鍵盤事件
+     * @param {boolean} isInputFocused - 是否在輸入框中
+     * @returns {boolean} - 是否已處理事件
+     */
+    function handleManualKeyboard(e, isInputFocused) {
+        // 檢查是否在輸入框中 (Requirement 9.6)
+        if (isInputFocused) return false;
+        
+        // 檢查是否為手動模式
+        if (ManualReadingState.readingMode !== 'manual') return false;
+        
+        switch (e.code) {
+            case 'Space':
+                // Space 鍵：開始/重讀 (Requirement 9.4)
+                e.preventDefault();
+                const manualStartBtn = document.getElementById('manualStartBtn');
+                if (manualStartBtn && !manualStartBtn.disabled) {
+                    manualStartOrReplay();
+                }
+                return true;
+                
+            case 'ArrowRight':
+                // 右方向鍵：下一個 (Requirement 9.2)
+                e.preventDefault();
+                const nextBtn = document.getElementById('nextBtn');
+                if (nextBtn && !nextBtn.disabled) {
+                    manualNext();
+                }
+                return true;
+                
+            case 'ArrowLeft':
+                // 左方向鍵：上一個 (Requirement 9.3)
+                e.preventDefault();
+                const prevBtn = document.getElementById('prevBtn');
+                if (prevBtn && !prevBtn.disabled) {
+                    manualPrevious();
+                }
+                return true;
+                
+            case 'Escape':
+                // Escape 鍵：取消 (Requirement 9.5)
+                e.preventDefault();
+                const manualStopBtn = document.getElementById('manualStopBtn');
+                if (manualStopBtn && !manualStopBtn.disabled) {
+                    manualStop();
+                }
+                return true;
+                
+            default:
+                return false;
+        }
+    }
+    
+    /**
+     * 自動模式鍵盤事件處理
+     * Requirements: 6.1, 6.2, 6.3
+     * @param {KeyboardEvent} e - 鍵盤事件
+     * @param {boolean} isInputFocused - 是否在輸入框中
+     * @returns {boolean} - 是否已處理事件
+     */
+    function handleAutoKeyboard(e, isInputFocused) {
+        // Space 鍵：開始/暫停（排除輸入框焦點）
+        if (e.code === 'Space' && !isInputFocused) {
+            e.preventDefault();
+            const startBtn = document.getElementById('startBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            
+            if (!startBtn.disabled) {
+                // 未開始，點擊開始
+                startReading();
+            } else if (!pauseBtn.disabled) {
+                // 已開始，切換暫停/恢復
+                togglePause();
+            }
+            return true;
+        }
+        
+        // Escape 鍵：停止
+        if (e.code === 'Escape') {
+            const stopBtn = document.getElementById('stopBtn');
+            if (!stopBtn.disabled) {
+                stopReading();
+            }
+            return true;
+        }
+        
+        return false;
+    }
     
     /**
      * 初始化鍵盤快捷鍵
+     * 根據朗讀模式分派到不同的處理函數 (Requirement 9.1)
      */
     function initKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
@@ -2709,27 +3406,11 @@
                 activeElement.isContentEditable
             );
             
-            // Space 鍵：開始/暫停（排除輸入框焦點）
-            if (e.code === 'Space' && !isInputFocused) {
-                e.preventDefault();
-                const startBtn = document.getElementById('startBtn');
-                const pauseBtn = document.getElementById('pauseBtn');
-                
-                if (!startBtn.disabled) {
-                    // 未開始，點擊開始
-                    startReading();
-                } else if (!pauseBtn.disabled) {
-                    // 已開始，切換暫停/恢復
-                    togglePause();
-                }
-            }
-            
-            // Escape 鍵：停止
-            if (e.code === 'Escape') {
-                const stopBtn = document.getElementById('stopBtn');
-                if (!stopBtn.disabled) {
-                    stopReading();
-                }
+            // 根據朗讀模式分派到不同的處理函數 (Requirement 9.1)
+            if (ManualReadingState.readingMode === 'manual') {
+                handleManualKeyboard(e, isInputFocused);
+            } else {
+                handleAutoKeyboard(e, isInputFocused);
             }
         });
     }
