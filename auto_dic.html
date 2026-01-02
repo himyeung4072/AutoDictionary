@@ -1604,23 +1604,40 @@
                 <ul>
                     <li><strong>朗讀速度：</strong>調整語音快慢</li>
                     <li><strong>重讀次數：</strong>每個詞語重複幾次</li>
-                    <li><strong>間隔時間：</strong>詞語之間的等待時間</li>
+                    <li><strong>每字書寫時間：</strong>給孩子書寫的時間</li>
                 </ul>
-                <p>可根據孩子的程度自由調整。</p>
+                <p style="font-size: 12px; color: var(--color-text-muted); margin-top: var(--spacing-sm);">
+                    💡 書寫時間計算：<br>
+                    • 中文：字數 × 秒數（如「天氣」= 2×3 = 6秒）<br>
+                    • 英文：單詞數 × 秒數（如「good morning」= 2×3 = 6秒）
+                </p>
             </div>
-            <!-- Step 4 -->
+            <!-- Step 4: 自動朗讀模式 -->
             <div class="tutorial-step" data-step="4">
-                <div class="tutorial-step-icon">🎮</div>
-                <h4>播放控制</h4>
+                <div class="tutorial-step-icon">🔄</div>
+                <h4>自動朗讀模式</h4>
+                <p>系統自動依序朗讀所有內容，適合完整默書練習。</p>
                 <ul>
-                    <li><strong>開始：</strong>開始朗讀</li>
-                    <li><strong>暫停/繼續：</strong>暫時停止或繼續</li>
-                    <li><strong>停止：</strong>完全停止朗讀</li>
+                    <li>▶️ <strong>播放/暫停：</strong>開始或暫停朗讀</li>
+                    <li>⏹️ <strong>停止：</strong>完全停止朗讀</li>
                 </ul>
-                <p>也可以使用鍵盤快捷鍵：空白鍵（暫停）、Esc（停止）</p>
+                <p style="font-size: 12px; color: var(--color-text-muted);">鍵盤：空白鍵（播放/暫停）、Esc（停止）</p>
             </div>
-            <!-- Step 5 -->
+            <!-- Step 5: 手動朗讀模式 -->
             <div class="tutorial-step" data-step="5">
+                <div class="tutorial-step-icon">👆</div>
+                <h4>手動朗讀模式</h4>
+                <p>自己控制朗讀進度，適合逐個詞語練習。</p>
+                <ul>
+                    <li>◀️ <strong>上一個：</strong>返回上一個詞語</li>
+                    <li>▶️ <strong>開始/重讀：</strong>朗讀或重讀當前詞語</li>
+                    <li>▶️ <strong>下一個：</strong>跳到下一個詞語</li>
+                    <li>⏹️ <strong>取消：</strong>結束朗讀</li>
+                </ul>
+                <p style="font-size: 12px; color: var(--color-text-muted);">鍵盤：← → 切換、空白鍵重讀、Esc 取消</p>
+            </div>
+            <!-- Step 6 -->
+            <div class="tutorial-step" data-step="6">
                 <div class="tutorial-step-icon">✨</div>
                 <h4>準備好了！</h4>
                 <p>現在你可以開始使用默書神器了。</p>
@@ -1632,6 +1649,7 @@
             <button class="tutorial-nav-btn secondary" id="tutorialPrevBtn">上一步</button>
             <div class="tutorial-dots" id="tutorialDots">
                 <span class="tutorial-dot active"></span>
+                <span class="tutorial-dot"></span>
                 <span class="tutorial-dot"></span>
                 <span class="tutorial-dot"></span>
                 <span class="tutorial-dot"></span>
@@ -3167,7 +3185,7 @@
     // ==================== 教學 Modal (Tutorial Modal) ====================
     
     const TUTORIAL_STORAGE_KEY = 'tutorialShown';
-    const TOTAL_TUTORIAL_STEPS = 5;
+    const TOTAL_TUTORIAL_STEPS = 6;
     let currentTutorialStep = 1;
     
     /**
@@ -4860,8 +4878,19 @@
 
     // 計算詞語等待時間（讀詞語模式使用）
     function calculateWordWaitTime(word, lang, charWaitTime) {
-        // 詞語模式：每行就是一個詞語單位，書寫時間 = 1 × 設定秒數
-        return charWaitTime * 1000;
+        // 檢測詞語內容是否為中文
+        const chineseChars = (word.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []);
+        const hasChineseContent = chineseChars.length > 0;
+        
+        if (hasChineseContent) {
+            // 中文詞語：用中文字數計算（例如「天氣」= 2字 × 3秒 = 6秒）
+            return chineseChars.length * charWaitTime * 1000;
+        } else {
+            // 英文詞語：用單詞數計算
+            const wordCount = word.split(/\s+/).filter(w => w.length > 0).length;
+            const count = wordCount > 0 ? wordCount : 1;
+            return count * charWaitTime * 1000;
+        }
     }
 
     async function startReading() {
