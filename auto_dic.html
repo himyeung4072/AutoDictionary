@@ -2576,9 +2576,9 @@
      */
     function getFullReadAnnouncementMessage(lang) {
         const messages = {
-            'zh-HK': '所有內容朗讀完畢，現在會完整朗讀一次',
-            'zh-CN': '所有内容朗读完毕，现在会完整朗读一次',
-            'en-GB': 'All content has been read aloud; now it will be read aloud in full once.'
+            'zh-HK': '所有內容朗讀完畢，現在會完整朗讀一次。',
+            'zh-CN': '所有内容朗读完毕，现在会完整朗读一次。',
+            'en-GB': 'All content has been read aloud, Now it will be read aloud in full once.'
         };
         // 使用 Object.hasOwn 避免原型鏈污染問題（如 valueOf, toString 等）
         return Object.hasOwn(messages, lang) ? messages[lang] : messages['zh-HK'];
@@ -4410,17 +4410,8 @@
 
     // 計算詞語等待時間（讀詞語模式使用）
     function calculateWordWaitTime(word, lang, charWaitTime) {
-        if (lang.startsWith('zh')) {
-            // 中文：計算漢字數量
-            const charCount = (word.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []).length;
-            const count = charCount > 0 ? charCount : word.length;
-            return count * charWaitTime * 1000;
-        } else {
-            // 英文：計算單詞數量
-            const wordCount = word.split(/\s+/).filter(w => w.length > 0).length;
-            const count = wordCount > 0 ? wordCount : 1;
-            return count * charWaitTime * 1000;
-        }
+        // 詞語模式：每行就是一個詞語單位，書寫時間 = 1 × 設定秒數
+        return charWaitTime * 1000;
     }
 
     async function startReading() {
@@ -4526,7 +4517,8 @@
                     : parseFloat(document.getElementById('speechRate').value) || 0.9;
                 
                 // 使用相同的語音和速度設定廣播提示訊息 (Requirement 2.4)
-                await speakPromise(announcementMessage, lang, selectedVoice, speechRate);
+                // 公告訊息：標點只停頓不朗讀
+                await speakAnnouncementPromise(announcementMessage, lang, selectedVoice, speechRate);
                 
                 // 提示訊息期間可停止 (Requirement 2.5)
                 if (!isStopped) {
@@ -5014,6 +5006,42 @@
         return voice;
     }
 
+    // 將標點符號轉換為停頓（不朗讀標點名稱）
+    // 用於公告訊息等場景，標點處只停頓不唸出
+    function convertPunctuationToPause(text, lang) {
+        const pauseMarkEn = ',';   // 英文用逗號產生自然停頓
+        const pauseMarkZh = '...'; // 中文用省略號
+        
+        if (!lang.startsWith('zh')) {
+            // 英文：標點轉為停頓
+            return text
+                .replace(/[,，]/g, pauseMarkEn + ' ')
+                .replace(/[.。]/g, pauseMarkEn + ' ')
+                .replace(/[!！]/g, pauseMarkEn + ' ')
+                .replace(/[?？]/g, pauseMarkEn + ' ')
+                .replace(/[;；]/g, pauseMarkEn + ' ')
+                .replace(/[:：]/g, pauseMarkEn + ' ')
+                .replace(/[、]/g, pauseMarkEn + ' ')
+                .replace(/[—–－]/g, pauseMarkEn + ' ')
+                .replace(/[""''「」]/g, ' ')
+                .replace(/[（）()]/g, ' ');
+        } else {
+            // 中文：標點轉為停頓
+            return text
+                .replace(/[，,]/g, pauseMarkZh + ' ')
+                .replace(/[。.]/g, pauseMarkZh + ' ')
+                .replace(/[！!]/g, pauseMarkZh + ' ')
+                .replace(/[？?]/g, pauseMarkZh + ' ')
+                .replace(/[；;]/g, pauseMarkZh + ' ')
+                .replace(/[：:]/g, pauseMarkZh + ' ')
+                .replace(/[、]/g, pauseMarkZh + ' ')
+                .replace(/[—–－]/g, pauseMarkZh + ' ')
+                .replace(/[……]/g, pauseMarkZh + ' ')
+                .replace(/[""''「」]/g, ' ')
+                .replace(/[（）()《》]/g, ' ');
+        }
+    }
+
     // 將標點符號轉換為可朗讀的文字
     function convertPunctuationToSpeech(text, lang) {
         // 英文使用逗號產生停頓，中文使用省略號
@@ -5207,6 +5235,79 @@
                     
                     synth.speak(utterance);
                 }, 50); // 短暫延遲讓 cancel 生效
+            };
+            
+            waitForResume();
+        });
+    }
+
+    // 專門用於公告訊息的朗讀函數（標點只停頓不朗讀）
+    function speakAnnouncementPromise(text, lang, voiceName, rate) {
+        return new Promise((resolve) => {
+            const waitForResume = () => {
+                if (isStopped) {
+                    resolve();
+                    return;
+                }
+                if (isPaused) {
+                    setTimeout(waitForResume, 200);
+                    return;
+                }
+                
+                const freshVoices = synth.getVoices();
+                if (freshVoices.length > 0) {
+                    availableVoices = freshVoices;
+                }
+                
+                let selectedVoice = null;
+                if (voiceName !== 'auto') {
+                    selectedVoice = availableVoices.find(v => v.name === voiceName);
+                }
+                if (!selectedVoice) {
+                    selectedVoice = findBestVoice(lang);
+                }
+                
+                synth.cancel();
+                
+                setTimeout(() => {
+                    // 公告訊息：標點只停頓不朗讀
+                    const speechText = convertPunctuationToPause(text, lang);
+                    
+                    const utterance = new SpeechSynthesisUtterance(speechText);
+                    utterance.rate = rate;
+                    
+                    if (selectedVoice) {
+                        const freshVoice = availableVoices.find(v => 
+                            v.name === selectedVoice.name && v.lang === selectedVoice.lang
+                        );
+                        const voiceToUse = freshVoice || selectedVoice;
+                        utterance.voice = voiceToUse;
+                        utterance.lang = voiceToUse.lang;
+                    } else {
+                        utterance.lang = lang;
+                    }
+
+                    currentUtterance = utterance;
+                    isSpeaking = true;
+
+                    utterance.onend = () => {
+                        currentUtterance = null;
+                        isSpeaking = false;
+                        resolve();
+                    };
+                    utterance.onerror = (event) => {
+                        currentUtterance = null;
+                        isSpeaking = false;
+                        if (event.error === 'interrupted' || event.error === 'canceled') {
+                            resolve();
+                            return;
+                        }
+                        console.error('語音合成錯誤:', event.error);
+                        resolve();
+                    };
+                    
+                    synth.speak(utterance);
+                }, 50);
             };
             
             waitForResume();

@@ -68,9 +68,9 @@ stateDiagram-v2
  */
 function getFullReadAnnouncementMessage(lang) {
     const messages = {
-        'zh-HK': '所有內容朗讀完畢，現在會完整朗讀一次',
-        'zh-CN': '所有內容朗讀完畢，现在会完整朗读一次',
-        'en-GB': 'All content has been read aloud; now it will be read aloud in full once.'
+        'zh-HK': ' 所有內容朗讀完畢 現在會完整朗讀一次 ',
+        'zh-CN': ' 所有內容朗讀完畢 现在会完整朗读一次 ',
+        'en-GB': ' All content has been read aloud  Now it will be read aloud in full once'
     };
     return messages[lang] || messages['zh-HK'];
 }
