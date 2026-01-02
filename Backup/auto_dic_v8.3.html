@@ -90,16 +90,29 @@
         button { flex: 1; padding: var(--spacing-md); border: none; border-radius: var(--radius-md); cursor: pointer; font-size: var(--font-size-md); font-weight: bold; min-height: var(--touch-target-min); -webkit-tap-highlight-color: transparent; transition: all 0.3s ease; }
         
         /* ===== Light Mode Button Styles ===== */
-        /* Play/Pause Button - Fresh Emerald Green */
-        #playPauseBtn { 
+        /* Start Button - Fresh Emerald Green */
+        #startBtn { 
             background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.18));
             border: 2px solid rgba(16, 185, 129, 0.7);
             box-shadow: 0 0 12px rgba(16, 185, 129, 0.25), 0 4px 8px rgba(16, 185, 129, 0.15);
             color: #047857;
         }
-        #playPauseBtn:hover:not(:disabled) {
+        #startBtn:hover:not(:disabled) {
             background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.28));
             box-shadow: 0 0 20px rgba(16, 185, 129, 0.4), 0 6px 12px rgba(16, 185, 129, 0.25);
+            transform: translateY(-1px);
+        }
+        
+        /* Pause Button - Warm Amber */
+        #pauseBtn { 
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.18));
+            border: 2px solid rgba(245, 158, 11, 0.7);
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.25), 0 4px 8px rgba(245, 158, 11, 0.15);
+            color: #b45309;
+        }
+        #pauseBtn:hover:not(:disabled) {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.28));
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4), 0 6px 12px rgba(245, 158, 11, 0.25);
             transform: translateY(-1px);
         }
         
@@ -1194,17 +1207,31 @@
             }
             
             /* ===== Dark Mode Button Styles ===== */
-            /* Play/Pause Button - Electric Violet */
-            #playPauseBtn {
+            /* Start Button - Electric Violet */
+            #startBtn {
                 background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(124, 58, 237, 0.28));
                 border: 2px solid rgba(139, 92, 246, 0.8);
                 box-shadow: 0 0 15px rgba(139, 92, 246, 0.4), 0 0 30px rgba(139, 92, 246, 0.2);
                 color: #c4b5fd;
             }
             
-            #playPauseBtn:hover:not(:disabled) {
+            #startBtn:hover:not(:disabled) {
                 background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(124, 58, 237, 0.38));
                 box-shadow: 0 0 25px rgba(139, 92, 246, 0.6), 0 0 50px rgba(139, 92, 246, 0.3);
+                transform: translateY(-1px);
+            }
+            
+            /* Pause Button - Neon Cyan */
+            #pauseBtn {
+                background: linear-gradient(135deg, rgba(34, 211, 238, 0.15), rgba(6, 182, 212, 0.22));
+                border: 2px solid rgba(34, 211, 238, 0.8);
+                box-shadow: 0 0 15px rgba(34, 211, 238, 0.4), 0 0 30px rgba(34, 211, 238, 0.2);
+                color: #a5f3fc;
+            }
+            
+            #pauseBtn:hover:not(:disabled) {
+                background: linear-gradient(135deg, rgba(34, 211, 238, 0.25), rgba(6, 182, 212, 0.32));
+                box-shadow: 0 0 25px rgba(34, 211, 238, 0.6), 0 0 50px rgba(34, 211, 238, 0.3);
                 transform: translateY(-1px);
             }
             
@@ -1879,9 +1906,12 @@
         <span class="status-waiting" id="statusWaiting" aria-live="polite"></span>
     </div>
     <div class="player-controls" id="autoControls" role="group" aria-label="播放控制">
-        <button id="playPauseBtn" onclick="togglePlayPause()" aria-label="開始朗讀">
-            <svg class="play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-            <svg class="pause-icon" style="display:none" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        <button id="startBtn" onclick="startReading()" aria-label="開始朗讀">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button id="pauseBtn" onclick="togglePause()" disabled aria-label="暫停朗讀">
+            <svg class="pause-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            <svg class="resume-icon" style="display:none" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
         </button>
         <button id="stopBtn" onclick="stopReading()" disabled aria-label="停止朗讀">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>
@@ -1912,7 +1942,7 @@
     // 瀏覽器相容性檢查
     if (!('speechSynthesis' in window)) {
         alert('您的瀏覽器不支援語音合成功能，請使用 Chrome、Edge 或 Safari');
-        document.getElementById('playPauseBtn').disabled = true;
+        document.getElementById('startBtn').disabled = true;
     }
 
     let synth = window.speechSynthesis;
@@ -3852,10 +3882,10 @@
             btn.addEventListener('click', () => triggerHaptic('light'));
         });
         
-        // 播放/暫停按鈕使用中等反饋
-        const playPauseBtn = document.getElementById('playPauseBtn');
-        if (playPauseBtn) {
-            playPauseBtn.addEventListener('click', () => triggerHaptic('medium'));
+        // 開始按鈕使用中等反饋
+        const startBtn = document.getElementById('startBtn');
+        if (startBtn) {
+            startBtn.addEventListener('click', () => triggerHaptic('medium'));
         }
     }
     
@@ -3928,10 +3958,19 @@
      * @returns {boolean} - 是否已處理事件
      */
     function handleAutoKeyboard(e, isInputFocused) {
-        // Space 鍵：播放/暫停（排除輸入框焦點）
+        // Space 鍵：開始/暫停（排除輸入框焦點）
         if (e.code === 'Space' && !isInputFocused) {
             e.preventDefault();
-            togglePlayPause();
+            const startBtn = document.getElementById('startBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            
+            if (!startBtn.disabled) {
+                // 未開始，點擊開始
+                startReading();
+            } else if (!pauseBtn.disabled) {
+                // 已開始，切換暫停/恢復
+                togglePause();
+            }
             return true;
         }
         
@@ -4842,16 +4881,11 @@
     function calculateWaitTime(sentence, lang) {
         const rawValue = parseFloat(document.getElementById('charWaitTime').value);
         const charWaitTime = isNaN(rawValue) ? 3 : Math.max(0, rawValue);
-        
-        // 檢測文字內容是否為中文
-        const chineseChars = (sentence.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []);
-        const hasChineseContent = chineseChars.length > 0;
-        
-        if (hasChineseContent) {
-            // 中文內容：用中文字數計算
-            return chineseChars.length * charWaitTime * 1000;
+        if (lang.startsWith('zh')) {
+            const charCount = (sentence.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []).length;
+            const count = charCount > 0 ? charCount : sentence.length;
+            return count * charWaitTime * 1000;
         } else {
-            // 非中文內容（英文等）：用單詞數計算
             const wordCount = sentence.split(/\s+/).filter(w => w.length > 0).length;
             const count = wordCount > 0 ? wordCount : 1;
             return count * charWaitTime * 1000;
@@ -4917,8 +4951,39 @@
             
             if (!isStopped && fullReadEnabled && readingMode === 'auto') {
                 // 等待最後一個詞語/句子的書寫時間
-                // readWords/readArticle 已經在每個段落後等待了書寫時間
-                // 不需要額外等待
+                // 因為 readWords/readArticle 會跳過最後一項的等待時間
+                if (mode === 'word') {
+                    const charWaitTime = Math.max(0, parseFloat(document.getElementById('interval').value) || 0);
+                    if (charWaitTime > 0) {
+                        const lines = text.split('\n').map(s => s.trim()).filter(s => s !== "");
+                        if (lines.length > 0) {
+                            const lastWord = lines[lines.length - 1];
+                            const lastWordWaitTime = calculateWordWaitTime(lastWord, lang, charWaitTime);
+                            // 扣除已經花費的朗讀時間（估算），只等待書寫時間部分
+                            const writeTimeOnly = lastWord.length * charWaitTime * 1000;
+                            if (writeTimeOnly > 0 && !isStopped) {
+                                updateStatus('書寫時間...', '');
+                                await new Promise(r => setTimeout(r, writeTimeOnly));
+                            }
+                        }
+                    }
+                } else {
+                    // 文章模式：等待最後一個句子的書寫時間
+                    const charWaitTime = Math.max(0, parseFloat(document.getElementById('charWaitTime').value) || 0);
+                    if (charWaitTime > 0) {
+                        const punctuationReadingEnabled = document.getElementById('punctuationReadingEnabled').value === 'true';
+                        const segments = splitArticleSegments(text);
+                        const textSegments = segments.filter(s => s.type === 'text');
+                        if (textSegments.length > 0) {
+                            const lastSegment = textSegments[textSegments.length - 1];
+                            const writeTimeOnly = lastSegment.content.length * charWaitTime * 1000;
+                            if (writeTimeOnly > 0 && !isStopped) {
+                                updateStatus('書寫時間...', '');
+                                await new Promise(r => setTimeout(r, writeTimeOnly));
+                            }
+                        }
+                    }
+                }
                 
                 if (isStopped) {
                     // 如果在等待期間被停止，不繼續完整朗讀
@@ -5186,14 +5251,6 @@
                 updateStatus(`完整朗讀：${punctName}`, '');
                 
                 await speakPromise(punctName, lang, voiceName, speechRate);
-                
-                // 處理暫停
-                while (isPaused && !isStopped) {
-                    await new Promise(r => setTimeout(r, 200));
-                }
-            } else {
-                // 標點符號不朗讀，但加入停頓
-                await new Promise(r => setTimeout(r, 300));
                 
                 // 處理暫停
                 while (isPaused && !isStopped) {
@@ -5741,30 +5798,10 @@
         });
     }
 
-    // 追蹤是否正在播放中
-    let isPlaying = false;
-
-    /**
-     * 切換播放/暫停狀態
-     * 未開始時開始播放，播放中時暫停，暫停中時繼續
-     */
-    function togglePlayPause() {
-        if (!isPlaying && !isPaused) {
-            // 未開始，開始播放
-            startReading();
-        } else if (isPlaying && !isPaused) {
-            // 播放中，暫停
-            togglePause();
-        } else if (isPaused) {
-            // 暫停中，繼續
-            togglePause();
-        }
-    }
-
     function togglePause() {
-        const btn = document.getElementById('playPauseBtn');
-        const playIcon = btn.querySelector('.play-icon');
+        const btn = document.getElementById('pauseBtn');
         const pauseIcon = btn.querySelector('.pause-icon');
+        const resumeIcon = btn.querySelector('.resume-icon');
         
         if (!isPaused) {
             isPaused = true;
@@ -5775,9 +5812,8 @@
             // 直接取消當前語音
             synth.cancel();
             isSpeaking = false;
-            // 顯示播放圖示（表示可以繼續）
-            playIcon.style.display = 'block';
             pauseIcon.style.display = 'none';
+            resumeIcon.style.display = 'block';
             btn.setAttribute('aria-label', '繼續朗讀');
             updateStatus("⏸️ 暫停中", '');
             // 暫停時維持當前高亮 - Requirements 2.4, 4.2
@@ -5785,9 +5821,8 @@
         } else {
             isPaused = false;
             skipNextWait = true;  // 恢復後跳過等待
-            // 顯示暫停圖示（表示正在播放）
-            playIcon.style.display = 'none';
             pauseIcon.style.display = 'block';
+            resumeIcon.style.display = 'none';
             btn.setAttribute('aria-label', '暫停朗讀');
             // 恢復時繼續正常高亮流程 - Requirements 4.3
             // readWords/readArticle 會繼續執行，高亮會在下一個項目開始時更新
@@ -5796,14 +5831,12 @@
 
     function resetButtons() {
         setButtonsState(false);
-        const btn = document.getElementById('playPauseBtn');
-        const playIcon = btn.querySelector('.play-icon');
+        const btn = document.getElementById('pauseBtn');
         const pauseIcon = btn.querySelector('.pause-icon');
-        // 重置為播放圖示
-        playIcon.style.display = 'block';
-        pauseIcon.style.display = 'none';
-        btn.setAttribute('aria-label', '開始朗讀');
-        isPlaying = false;
+        const resumeIcon = btn.querySelector('.resume-icon');
+        pauseIcon.style.display = 'block';
+        resumeIcon.style.display = 'none';
+        btn.setAttribute('aria-label', '暫停朗讀');
     }
 
     function stopReading() {
@@ -5823,25 +5856,9 @@
     }
 
     function setButtonsState(running) {
-        const btn = document.getElementById('playPauseBtn');
-        const playIcon = btn.querySelector('.play-icon');
-        const pauseIcon = btn.querySelector('.pause-icon');
-        
+        document.getElementById('startBtn').disabled = running;
+        document.getElementById('pauseBtn').disabled = !running;
         document.getElementById('stopBtn').disabled = !running;
-        
-        if (running) {
-            // 播放中，顯示暫停圖示
-            playIcon.style.display = 'none';
-            pauseIcon.style.display = 'block';
-            btn.setAttribute('aria-label', '暫停朗讀');
-            isPlaying = true;
-        } else {
-            // 停止，顯示播放圖示
-            playIcon.style.display = 'block';
-            pauseIcon.style.display = 'none';
-            btn.setAttribute('aria-label', '開始朗讀');
-            isPlaying = false;
-        }
     }
     
     // 調試：顯示可用語音
