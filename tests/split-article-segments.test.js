@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { splitArticleSegments, PUNCTUATION_PATTERN } from './split-article-segments.js';
+import { splitArticleSegments, PUNCTUATION_PATTERN, PUNCTUATION_PATTERN_ENGLISH, containsChinese } from './split-article-segments.js';
 
 describe('splitArticleSegments', () => {
     describe('Basic functionality', () => {
@@ -98,6 +98,60 @@ describe('splitArticleSegments', () => {
             expect(result).toEqual([
                 { type: 'text', content: 'This is a test' },
                 { type: 'punct', content: '.' }
+            ]);
+        });
+
+        it('should NOT split on apostrophe in English possessives (King\'s)', () => {
+            const result = splitArticleSegments("King's road is beautiful.");
+            expect(result).toEqual([
+                { type: 'text', content: "King's road is beautiful" },
+                { type: 'punct', content: '.' }
+            ]);
+        });
+
+        it('should NOT split on curly apostrophe (\\u2019) in English possessives', () => {
+            const result = splitArticleSegments("King\u2019s road is beautiful.");
+            expect(result).toEqual([
+                { type: 'text', content: "King\u2019s road is beautiful" },
+                { type: 'punct', content: '.' }
+            ]);
+        });
+
+        it('should NOT split on apostrophe in English contractions (don\'t)', () => {
+            const result = splitArticleSegments("I don't know.");
+            expect(result).toEqual([
+                { type: 'text', content: "I don't know" },
+                { type: 'punct', content: '.' }
+            ]);
+        });
+
+        it('should NOT split on curly apostrophe in English contractions', () => {
+            const result = splitArticleSegments("I don\u2019t know.");
+            expect(result).toEqual([
+                { type: 'text', content: "I don\u2019t know" },
+                { type: 'punct', content: '.' }
+            ]);
+        });
+
+        it('should handle multiple English contractions in one sentence', () => {
+            const result = splitArticleSegments("It's John's book, isn't it?");
+            expect(result).toEqual([
+                { type: 'text', content: "It's John's book" },
+                { type: 'punct', content: ',' },
+                { type: 'text', content: " isn't it" },
+                { type: 'punct', content: '?' }
+            ]);
+        });
+    });
+
+    describe('Chinese single quotes', () => {
+        it('should split on single quotes in Chinese text', () => {
+            const result = splitArticleSegments("他說\u2018好\u2019");
+            expect(result).toEqual([
+                { type: 'text', content: '他說' },
+                { type: 'punct', content: '\u2018' },
+                { type: 'text', content: '好' },
+                { type: 'punct', content: '\u2019' }
             ]);
         });
     });

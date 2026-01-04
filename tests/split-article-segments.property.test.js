@@ -14,7 +14,7 @@
 
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { splitArticleSegments, PUNCTUATION_PATTERN } from './split-article-segments.js';
+import { splitArticleSegments, PUNCTUATION_PATTERN, PUNCTUATION_PATTERN_ENGLISH, containsChinese } from './split-article-segments.js';
 
 // ===== Custom Arbitraries =====
 
@@ -42,7 +42,7 @@ const englishTextArb = fc.string({
 }).filter(s => s.trim().length > 0);
 
 /**
- * Generate Chinese punctuation marks
+ * Generate Chinese punctuation marks (including single quotes which are treated as punctuation in Chinese)
  */
 const chinesePunctuationArb = fc.constantFrom(
     '。', '！', '？', '；', '，', '、', '：', '「', '」',
@@ -50,16 +50,20 @@ const chinesePunctuationArb = fc.constantFrom(
 );
 
 /**
- * Generate English punctuation marks
+ * Generate English punctuation marks (excluding single quotes for possessives/contractions)
  */
 const englishPunctuationArb = fc.constantFrom(
     '.', '!', '?', ';', ',', ':', '(', ')', '—', '–'
 );
 
 /**
- * Generate any punctuation mark
+ * Generate punctuation that works for both Chinese and English (no single quotes)
  */
-const anyPunctuationArb = fc.oneof(chinesePunctuationArb, englishPunctuationArb);
+const universalPunctuationArb = fc.constantFrom(
+    '。', '！', '？', '；', '，', '、', '：', '「', '」',
+    '\u201C', '\u201D', '（', '）',
+    '.', '!', '?', ';', ',', ':', '(', ')', '—', '–'
+);
 
 /**
  * Generate text without any punctuation (Chinese or English)
@@ -67,21 +71,21 @@ const anyPunctuationArb = fc.oneof(chinesePunctuationArb, englishPunctuationArb)
 const textWithoutPunctuationArb = fc.oneof(chineseTextArb, englishTextArb);
 
 /**
- * Generate a simple sentence: text + punctuation
+ * Generate a simple sentence: text + universal punctuation (works for both Chinese and English)
  */
-const simpleSentenceArb = fc.tuple(textWithoutPunctuationArb, anyPunctuationArb)
+const simpleSentenceArb = fc.tuple(textWithoutPunctuationArb, universalPunctuationArb)
     .map(([text, punct]) => text + punct);
 
 /**
- * Generate text with multiple sentences
+ * Generate text with multiple sentences (using universal punctuation)
  */
 const multiSentenceTextArb = fc.array(simpleSentenceArb, { minLength: 1, maxLength: 5 })
     .map(sentences => sentences.join(''));
 
 /**
- * Generate consecutive punctuation marks (2-4)
+ * Generate consecutive punctuation marks (2-4) using universal punctuation
  */
-const consecutivePunctuationArb = fc.array(anyPunctuationArb, { minLength: 2, maxLength: 4 })
+const consecutivePunctuationArb = fc.array(universalPunctuationArb, { minLength: 2, maxLength: 4 })
     .map(puncts => puncts.join(''));
 
 /**
@@ -91,6 +95,13 @@ const textWithConsecutivePunctuationArb = fc.tuple(
     textWithoutPunctuationArb,
     consecutivePunctuationArb
 ).map(([text, puncts]) => text + puncts);
+
+/**
+ * Helper function to get the appropriate punctuation pattern based on text content
+ */
+function getPunctuationPatternForText(text) {
+    return containsChinese(text) ? PUNCTUATION_PATTERN : PUNCTUATION_PATTERN_ENGLISH;
+}
 
 // ===== Property Tests =====
 
@@ -133,13 +144,14 @@ describe('Property 1: Article Splitting Before Punctuation', () => {
                 multiSentenceTextArb,
                 (text) => {
                     const segments = splitArticleSegments(text);
+                    const punctPattern = getPunctuationPatternForText(text);
                     
                     // All text segments should not contain any punctuation
                     const textSegments = segments.filter(s => s.type === 'text');
                     return textSegments.every(s => {
                         // Check that no character in the text segment is a punctuation
                         for (const char of s.content) {
-                            if (PUNCTUATION_PATTERN.test(char)) {
+                            if (punctPattern.test(char)) {
                                 return false;
                             }
                         }
@@ -213,10 +225,11 @@ describe('Property 1: Article Splitting Before Punctuation', () => {
                 multiSentenceTextArb,
                 (text) => {
                     const segments = splitArticleSegments(text);
+                    const punctPattern = getPunctuationPatternForText(text);
                     
                     // All punct segments should contain only punctuation
                     const punctSegments = segments.filter(s => s.type === 'punct');
-                    return punctSegments.every(s => PUNCTUATION_PATTERN.test(s.content));
+                    return punctSegments.every(s => punctPattern.test(s.content));
                 }
             ),
             { numRuns: 100 }
@@ -233,11 +246,12 @@ describe('Property 1: Article Splitting Before Punctuation', () => {
                 multiSentenceTextArb,
                 (text) => {
                     const segments = splitArticleSegments(text);
+                    const punctPattern = getPunctuationPatternForText(text);
                     
-                    // Count punctuation in original text
+                    // Count punctuation in original text using the appropriate pattern
                     let punctCountInText = 0;
                     for (const char of text) {
-                        if (PUNCTUATION_PATTERN.test(char)) {
+                        if (punctPattern.test(char)) {
                             punctCountInText++;
                         }
                     }

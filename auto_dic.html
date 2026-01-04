@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>默書神器</title>
+    <title>Dictation Master</title>
     <style>
         /* CSS Custom Properties */
         :root {
@@ -4596,8 +4596,11 @@
 
     // ===== 文章分割模組 (Requirements 4.1, 4.2, 4.3, 4.4) =====
     
-    // 標點符號正則表達式 - 匹配中英文標點符號
+    // 標點符號正則表達式 - 匹配中英文標點符號（包含單引號）
     const PUNCTUATION_PATTERN = /[。！？；，、．.!?;,：:「」\u201C\u201D\u2018\u2019（）\(\)—–\u2026－\-《》·]/;
+    
+    // 英文模式下的標點符號正則表達式 - 不包含單引號（用於所有格和縮寫如 King's, don't）
+    const PUNCTUATION_PATTERN_ENGLISH = /[。！？；，、．.!?;,：:「」\u201C\u201D（）\(\)—–\u2026－\-《》·]/;
     
     /**
      * 將文章在標點符號「前」分割成 segments
@@ -4619,6 +4622,11 @@
             return [];
         }
         
+        // 檢測是否為英文文字，如果是則不將單引號視為分隔符
+        // 這樣可以正確處理 King's, don't 等英文所有格和縮寫
+        const isEnglish = !containsChinese(text);
+        const punctPattern = isEnglish ? PUNCTUATION_PATTERN_ENGLISH : PUNCTUATION_PATTERN;
+        
         const segments = [];
         let currentText = '';
         let currentPunct = '';
@@ -4626,7 +4634,7 @@
         for (let i = 0; i < text.length; i++) {
             const char = text[i];
             
-            if (PUNCTUATION_PATTERN.test(char)) {
+            if (punctPattern.test(char)) {
                 // If we have accumulated text, add it as a text segment
                 if (currentText.length > 0) {
                     segments.push({ type: 'text', content: currentText });
