@@ -1312,6 +1312,38 @@
             }
         }
         
+        /* ===== 隱藏朗讀內容模式 ===== */
+        .text-display-container.content-hidden .highlight-item {
+            color: transparent;
+            text-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+            user-select: none;
+        }
+        
+        .text-display-container.content-hidden .highlight-item.active {
+            color: transparent;
+            text-shadow: 0 0 12px rgba(255, 193, 7, 0.8);
+        }
+        
+        .status-reading.content-hidden {
+            color: transparent !important;
+            text-shadow: 0 0 8px rgba(0, 123, 255, 0.6);
+        }
+        
+        /* Dark Mode: 隱藏朗讀內容 */
+        @media (prefers-color-scheme: dark) {
+            .text-display-container.content-hidden .highlight-item {
+                text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+            }
+            
+            .text-display-container.content-hidden .highlight-item.active {
+                text-shadow: 0 0 12px rgba(139, 92, 246, 0.8);
+            }
+            
+            .status-reading.content-hidden {
+                text-shadow: 0 0 8px rgba(153, 102, 255, 0.6);
+            }
+        }
+        
         /* Reduced Motion: Disable transitions and smooth scrolling */
         @media (prefers-reduced-motion: reduce) {
             .highlight-item {
@@ -1760,6 +1792,17 @@
                     <input type="hidden" id="punctuationReadingEnabled" value="true">
                 </div>
                 
+                <!-- Shared Settings: Show Reading Content Toggle -->
+                <div class="settings-control-group">
+                    <label>顯示朗讀內容：</label>
+                    <div class="segmented-control" id="showContentSegments" role="radiogroup" aria-label="顯示朗讀內容">
+                        <button class="segment active" data-value="true" role="radio" aria-checked="true">開</button>
+                        <button class="segment" data-value="false" role="radio" aria-checked="false">關</button>
+                    </div>
+                    <input type="hidden" id="showContentEnabled" value="true">
+                    <div class="settings-hint">關閉後朗讀內容會被遮蔽，適合默書練習</div>
+                </div>
+                
                 <!-- Word Mode Controls -->
                 <div id="wordControls">
                     <!-- Speed: Segmented Control -->
@@ -2063,6 +2106,12 @@
             // 顯示容器
             this.displayContainer.classList.remove('hidden');
             
+            // 根據「顯示朗讀內容」設定套用遮蔽
+            const showContent = document.getElementById('showContentEnabled').value === 'true';
+            if (!showContent) {
+                this.displayContainer.classList.add('content-hidden');
+            }
+            
             return true;
         },
 
@@ -2331,6 +2380,34 @@
                 fullReadControlGroup.classList.remove('collapsed');
             } else {
                 fullReadControlGroup.classList.add('collapsed');
+            }
+        }
+    }
+    
+    /**
+     * 更新朗讀內容的可見性
+     * 根據「顯示朗讀內容」設定，切換遮蔽效果
+     */
+    function updateContentVisibility() {
+        const showContent = document.getElementById('showContentEnabled').value === 'true';
+        
+        // 更新文字顯示容器
+        const displayContainer = document.getElementById('textDisplayContainer');
+        if (displayContainer) {
+            if (showContent) {
+                displayContainer.classList.remove('content-hidden');
+            } else {
+                displayContainer.classList.add('content-hidden');
+            }
+        }
+        
+        // 更新進度欄的朗讀內容
+        const statusReading = document.getElementById('statusReading');
+        if (statusReading) {
+            if (showContent) {
+                statusReading.classList.remove('content-hidden');
+            } else {
+                statusReading.classList.add('content-hidden');
             }
         }
     }
@@ -2790,6 +2867,13 @@
         
         if (statusReading) {
             statusReading.textContent = reading || '';
+            // 根據「顯示朗讀內容」設定套用遮蔽
+            const showContent = document.getElementById('showContentEnabled').value === 'true';
+            if (!showContent) {
+                statusReading.classList.add('content-hidden');
+            } else {
+                statusReading.classList.remove('content-hidden');
+            }
         }
         if (statusWaiting) {
             statusWaiting.textContent = waiting || '';
@@ -3065,6 +3149,12 @@
         initSegmentedControl('charWaitTimeSegments', 'charWaitTime', onSettingChange);
         // 標點符號朗讀開關 (Requirements 1.1, 1.5)
         initSegmentedControl('punctuationReadingSegments', 'punctuationReadingEnabled', onSettingChange);
+        
+        // 顯示朗讀內容開關
+        initSegmentedControl('showContentSegments', 'showContentEnabled', (value) => {
+            updateContentVisibility();
+            onSettingChange();
+        });
         
         // 朗讀模式切換 (Requirements 1.1, 1.2)
         initSegmentedControl('readingModeSegments', 'readingMode', (value) => {
@@ -3403,6 +3493,8 @@
             charWaitTime: document.getElementById('charWaitTime').value,
             // 標點符號朗讀開關 (Requirements 1.1, 1.4, 1.5)
             punctuationReadingEnabled: document.getElementById('punctuationReadingEnabled').value === 'true',
+            // 顯示朗讀內容開關
+            showContentEnabled: document.getElementById('showContentEnabled').value === 'true',
             // 朗讀模式 (Requirements 1.5)
             readingMode: document.getElementById('readingMode').value,
             // 完整朗讀功能開關 (Requirements 1.3)
@@ -3512,6 +3604,12 @@
             const punctuationEnabled = settings.punctuationReadingEnabled !== undefined ? settings.punctuationReadingEnabled : true;
             document.getElementById('punctuationReadingEnabled').value = punctuationEnabled.toString();
             updateSegmentedControl('punctuationReadingSegments', punctuationEnabled.toString());
+            
+            // 載入顯示朗讀內容開關設定
+            // 預設為 true（開啟）
+            const showContentEnabled = settings.showContentEnabled !== undefined ? settings.showContentEnabled : true;
+            document.getElementById('showContentEnabled').value = showContentEnabled.toString();
+            updateSegmentedControl('showContentSegments', showContentEnabled.toString());
             
             // 載入朗讀模式設定 (Requirements 1.5, 1.6)
             // 預設為 'auto'（自動朗讀）
