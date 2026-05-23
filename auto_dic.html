@@ -4723,6 +4723,9 @@
         const isEnglish = !containsChinese(text);
         const punctPattern = isEnglish ? PUNCTUATION_PATTERN_ENGLISH : PUNCTUATION_PATTERN;
         
+        // 判斷是否為英文字母或數字（用於上下文判斷字內撇號）
+        const isWordChar = c => /[A-Za-z0-9]/.test(c);
+        
         const segments = [];
         let currentText = '';
         let currentPunct = '';
@@ -4730,7 +4733,29 @@
         for (let i = 0; i < text.length; i++) {
             const char = text[i];
             
-            if (punctPattern.test(char)) {
+            // 英文模式下，對 ASCII 單引號 ' 進行上下文判斷
+            // - 字內撇號（如 don't, it's）→ 視為文字一部分，不分段
+            // - 結尾所有格（如 teachers'）→ 視為文字一部分，不分段
+            // - 獨立引號（如 'Where, Dad'）→ 視為標點符號，分段並產生停頓
+            let isPunct;
+            if (isEnglish && char === "'") {
+                const prev = i > 0 ? text[i - 1] : '';
+                const next = i < text.length - 1 ? text[i + 1] : '';
+                if (isWordChar(prev) && isWordChar(next)) {
+                    // 字內撇號（如 don't, it's）
+                    isPunct = false;
+                } else if (isWordChar(prev) && !isWordChar(next)) {
+                    // 結尾所有格（如 teachers'）
+                    isPunct = false;
+                } else {
+                    // 獨立引號（如開頭的 'Where 或被空白圍繞的 ' word'）
+                    isPunct = true;
+                }
+            } else {
+                isPunct = punctPattern.test(char);
+            }
+            
+            if (isPunct) {
                 // If we have accumulated text, add it as a text segment
                 if (currentText.length > 0) {
                     segments.push({ type: 'text', content: currentText });
@@ -4815,6 +4840,8 @@
         ':': 'colon',
         '—': 'dash',
         '–': 'dash',
+        '"': 'quote',             // " (ASCII double quote)
+        "'": 'quote',             // ' (ASCII single quote, used as standalone)
         '\u201C': 'open quote',   // " (left double quotation mark)
         '\u201D': 'close quote',  // " (right double quotation mark)
         '\u2018': 'open quote',   // ' (left single quotation mark)
@@ -5597,6 +5624,7 @@
                 .replace(/[、]/g, pauseMarkEn + ' ')
                 .replace(/[—–－]/g, pauseMarkEn + ' ')
                 .replace(/[""''「」]/g, ' ')
+                .replace(/['"]/g, ' ')
                 .replace(/[（）()]/g, ' ');
         } else {
             // 中文：標點轉為停頓
@@ -5672,6 +5700,10 @@
                 .replace(/"/g, pauseMarkEn + ' end quote ')
                 .replace(/'/g, pauseMarkEn + ' quote ')
                 .replace(/'/g, pauseMarkEn + ' end quote ')
+                // 未被保護的獨立 ASCII 單/雙引號（如 'Where, Dad?'）
+                // 字內撇號已在步驟 1 被替換為佔位符，剩下的都是獨立引號
+                .replace(/'/g, pauseMarkEn + ' quote ' + pauseMarkEn + ' ')
+                .replace(/"/g, pauseMarkEn + ' quote ' + pauseMarkEn + ' ')
                 .replace(/「/g, pauseMarkEn + ' quote ')
                 .replace(/」/g, pauseMarkEn + ' end quote ')
                 // 括號
