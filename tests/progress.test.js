@@ -404,11 +404,11 @@ describe('Mode Tab State Properties', () => {
 
 // Speed value to label mapping
 const speedLabels = {
+    '0.3': '極慢',
+    '0.4': '超慢',
     '0.5': '很慢',
     '0.7': '慢',
-    '0.9': '正常',
-    '1.1': '快',
-    '1.3': '很快'
+    '0.9': '正常'
 };
 
 /**
@@ -447,7 +447,7 @@ describe('Settings Preview Properties', () => {
      * **Validates: Requirements 4.2**
      */
     describe('Property 5: Settings Preview Accuracy', () => {
-        const validSpeedValues = ['0.5', '0.7', '0.9', '1.1', '1.3'];
+        const validSpeedValues = ['0.3', '0.4', '0.5', '0.7', '0.9'];
         const validRepeatCounts = ['1', '2', '3', '4', '5'];
         const validIntervals = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 
